@@ -65,14 +65,7 @@ export default function Navbar() {
   ];
 
   return (
-    <nav
-      className={`fixed top-0 right-0 z-30 transition-all duration-300 lg:left-80 left-0
-        ${
-          isScrolled
-            ? "bg-white/95 backdrop-blur-md shadow-lg"
-            : "bg-gradient-to-r from-[#0f4c5c] via-[#1e88a8] to-[#2596be]"
-        }`}
-    >
+    <nav className="fixed top-0 right-0 z-30 transition-all duration-300 lg:left-80 left-0 bg-gradient-to-r from-[#0f4c5c] via-[#1e88a8] to-[#2596be]">
       <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* ✅ Left Section - Username instead of Search */}
