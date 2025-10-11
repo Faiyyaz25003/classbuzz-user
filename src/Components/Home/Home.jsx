@@ -7,6 +7,7 @@ import Dashboard from "../Dashboard/Dashboard";
 import Attendance from "../Attendance/Attendance";
 import Leave from "../Leave/Leave";
 import Documents from "../Documents/Documents";
+import UserId from "../UserId/UserId";
 
 
 
@@ -23,6 +24,8 @@ export default function Home() {
         return <Leave />;
       case "documents":
         return <Documents />;
+      case "userId":
+        return <UserId />;
       default:
         return <Dashboard />;
     }

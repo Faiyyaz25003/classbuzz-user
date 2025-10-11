@@ -1,4 +1,3 @@
-
 "use client";
 import React, { useState, useEffect } from "react";
 import {
@@ -10,7 +9,6 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  User,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -37,6 +35,7 @@ export default function Sidebar({ currentView, setCurrentView }) {
     { id: "diet", name: "Diet", icon: FileText },
     { id: "schedule", name: "Schedule", icon: LayoutDashboard },
     { id: "documents", name: "Documents", icon: FileText },
+    { id: "userId", name: "UserId", icon: FileText },
   ];
 
   const handleLinkClick = (id) => {
@@ -95,21 +94,6 @@ export default function Sidebar({ currentView, setCurrentView }) {
           </div>
         )}
       </div>
-
-      {/* User Profile */}
-      {(!isCollapsed || isMobile) && (
-        <div className="mx-4 mb-4 p-4 bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 hover:bg-white/15 transition-all duration-300">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full flex items-center justify-center shadow-lg flex-shrink-0">
-              <User size={24} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold truncate">Welcome Back!</p>
-              <p className="text-xs text-cyan-200/80 truncate">Faiyyaz Khan</p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Menu */}
       <nav className="flex flex-col px-4 gap-2 flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-white/20">

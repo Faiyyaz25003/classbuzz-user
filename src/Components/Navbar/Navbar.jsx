@@ -1,28 +1,59 @@
 
+
 "use client";
 import { useState, useEffect } from "react";
+import axios from "axios";
 import Link from "next/link";
 import { Bell, User, ChevronDown, Settings, LogOut, Mail } from "lucide-react";
 
 export default function Navbar() {
-  const pathname = "/";
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [userName, setUserName] = useState("Faiyyaz Khan");
+  const [user, setUser] = useState({ name: "Loading...", email: "Loading..." });
 
+  // ✅ Fetch logged-in user info from backend
   useEffect(() => {
-    const name = localStorage.getItem("userName") || "Faiyyaz Khan";
-    setUserName(name);
+    const fetchUser = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setUser({ name: "Guest", email: "guest@classbuzz.com" });
+          return;
+        }
+
+        const res = await axios.get("http://localhost:5000/api/users/me", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        // Backend se aane wale user data
+        setUser({
+          name: res.data.name || "User",
+          email: res.data.email || "user@classbuzz.com",
+        });
+
+        // Optional: LocalStorage me bhi save karo
+        localStorage.setItem("userName", res.data.name);
+        localStorage.setItem("userEmail", res.data.email);
+      } catch (error) {
+        console.error("❌ Error fetching user:", error);
+        setUser({ name: "Guest", email: "guest@classbuzz.com" });
+      }
+    };
+
+    fetchUser();
   }, []);
 
+  // ✅ Scroll shadow effect
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // ✅ Click outside close
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (!e.target.closest(".profile-dropdown")) setIsProfileOpen(false);
@@ -33,6 +64,7 @@ export default function Navbar() {
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
+  // ✅ Mock notifications (replace with backend later)
   const notifications = [
     {
       id: 1,
@@ -57,26 +89,23 @@ export default function Navbar() {
     },
   ];
 
-  const navLinks = [
-    { name: "Dashboard", href: "/" },
-    { name: "Classes", href: "/classes" },
-    { name: "Assignments", href: "/assignments" },
-    { name: "Calendar", href: "/calendar" },
-  ];
-
   return (
-    <nav className="fixed top-0 right-0 z-30 transition-all duration-300 lg:left-80 left-0 bg-gradient-to-r from-[#0f4c5c] via-[#1e88a8] to-[#2596be]">
+    <nav
+      className={`fixed top-0 right-0 z-30 transition-all duration-300 lg:left-80 left-0 
+        ${isScrolled ? "shadow-lg" : ""}
+        bg-gradient-to-r from-[#0f4c5c] via-[#1e88a8] to-[#2596be]`}
+    >
       <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 lg:h-20">
-          {/* ✅ Left Section - Username instead of Search */}
+          {/* ✅ Left Section - Username */}
           <div className="flex items-center gap-4 flex-1">
             <h2 className="text-2xl font-semibold text-white">
               Welcome,&nbsp;
-              <span className="text-yellow-200">{userName}</span>
+              <span className="text-yellow-200">{user.name}</span>
             </h2>
           </div>
 
-          {/* Right Section - Actions */}
+          {/* ✅ Right Section - Notifications & Profile */}
           <div className="flex items-center gap-2 sm:gap-4">
             {/* Notifications */}
             <div className="relative notification-dropdown">
@@ -86,11 +115,10 @@ export default function Navbar() {
               >
                 <Bell size={20} />
                 <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse">
-                  3
+                  {notifications.filter((n) => n.unread).length}
                 </span>
               </button>
 
-              {/* Notification Dropdown */}
               {isNotificationOpen && (
                 <div className="absolute right-0 mt-3 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-fade-in">
                   <div className="bg-gradient-to-r from-[#0f4c5c] to-[#1e88a8] p-4">
@@ -150,8 +178,8 @@ export default function Navbar() {
                   <User size={20} className="text-white" />
                 </div>
                 <div className="hidden sm:block text-left text-white">
-                  <p className="text-sm font-semibold">{userName}</p>
-                  <p className="text-xs text-cyan-100">Administrator</p>
+                  <p className="text-sm font-semibold">{user.name}</p>
+                  <p className="text-xs text-cyan-100">{user.email}</p>
                 </div>
                 <ChevronDown
                   size={16}
@@ -161,7 +189,6 @@ export default function Navbar() {
                 />
               </button>
 
-              {/* Profile Dropdown Menu */}
               {isProfileOpen && (
                 <div className="absolute right-0 mt-3 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-fade-in">
                   <div className="bg-gradient-to-r from-[#0f4c5c] to-[#1e88a8] p-4">
@@ -170,10 +197,8 @@ export default function Navbar() {
                         <User size={24} className="text-white" />
                       </div>
                       <div>
-                        <p className="text-white font-semibold">{userName}</p>
-                        <p className="text-cyan-100 text-sm">
-                          faiyyaz@classbuzz.com
-                        </p>
+                        <p className="text-white font-semibold">{user.name}</p>
+                        <p className="text-cyan-100 text-sm">{user.email}</p>
                       </div>
                     </div>
                   </div>
@@ -200,7 +225,15 @@ export default function Navbar() {
                       <span className="font-medium">Settings</span>
                     </Link>
                     <div className="h-px bg-gray-200 my-2"></div>
-                    <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-50 transition-colors text-red-600 hover:text-red-700">
+                    <button
+                      onClick={() => {
+                        localStorage.removeItem("token");
+                        localStorage.removeItem("userName");
+                        localStorage.removeItem("userEmail");
+                        window.location.href = "/login";
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-50 transition-colors text-red-600 hover:text-red-700"
+                    >
                       <LogOut size={18} />
                       <span className="font-medium">Logout</span>
                     </button>
@@ -212,6 +245,7 @@ export default function Navbar() {
         </div>
       </div>
 
+      {/* Animation Style */}
       <style jsx>{`
         @keyframes fade-in {
           from {
