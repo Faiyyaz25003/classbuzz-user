@@ -1,22 +1,53 @@
 
+
+
 "use client";
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { FcGoogle } from "react-icons/fc";
+import { FaFacebook } from "react-icons/fa";
 
 export default function Login() {
   const router = useRouter();
-  const [form, setForm] = useState({ email: "", password: "" });
-  const [error, setError] = useState("");
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-    if (error) setError("");
-  };
+  const services = [
+    {
+      label: "100% Success & Placement",
+      image: "/Degree.png",
+    },
+    {
+      label: "Knowledgable Facility",
+      image: "/Education.jpg",
+    },
+    {
+      label: "Computer Lab Facility",
+      image: "/Computer.jpeg",
+    },
+    {
+      label: "Science Lab Facility",
+      image: "/Science.jpg",
+    },
+    {
+      label: "Sport Facility",
+      image: "/Sport.jpg",
+    },
+  ];
+
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % services.length);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,7 +57,7 @@ export default function Login() {
     try {
       const res = await axios.post(
         "http://localhost:5000/api/users/login",
-        form
+        formData
       );
       const { token, user } = res.data;
 
@@ -37,9 +68,7 @@ export default function Login() {
       toast.success(`Welcome back, ${user.name}! 🎉`, {
         position: "top-right",
         autoClose: 2000,
-        onClose: () => {
-          router.push("/home");
-        },
+        onClose: () => router.push("/home"),
       });
     } catch (err) {
       const errorMessage =
@@ -52,138 +81,124 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-black text-white">
+    <div className="auth-container flex items-center justify-center min-h-screen bg-gray-100 px-4">
       <ToastContainer />
-
-      {/* Background Hero Section */}
-      <div className="relative flex-1 flex items-center justify-center bg-gradient-to-r from-gray-900 via-black to-gray-900">
-        {/* Background overlay */}
-        <div className="absolute inset-0 opacity-20">
+      <div className="auth-card flex flex-col lg:flex-row bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-200 gap-6 max-w-7xl w-full h-[90vh] p-6">
+        {/* LEFT SLIDER */}
+        <div className="auth-left relative w-full lg:w-1/2 flex items-center justify-center overflow-hidden rounded-2xl">
           <img
-            src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=2070&q=80"
-            alt="Gym background"
-            className="w-full h-full object-cover"
+            key={currentSlide}
+            src={services[currentSlide].image}
+            alt={services[currentSlide].label}
+            className="auth-slide w-full h-full object-cover"
           />
+          <div className="auth-overlay absolute inset-0 bg-black/30"></div>
+          <div className="auth-caption absolute bottom-8 left-6 text-white text-xl font-semibold">
+            {services[currentSlide].label}
+          </div>
         </div>
-        <div className="absolute inset-0 bg-black/50"></div>
 
-        {/* Login Form */}
-        <div className="relative z-10 w-full max-w-md px-6  mt-[100px]  mb-[100px]">
-          <form
-            onSubmit={handleSubmit}
-            className="bg-gray-900/80 backdrop-blur-lg p-8 rounded-2xl shadow-xl border border-white/10"
-          >
-            <div className="text-center mb-6">
-              <div className="mx-auto w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mb-4">
-                <svg
-                  className="w-8 h-8 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                  />
-                </svg>
-              </div>
-              <h1 className="text-3xl font-bold text-white mb-2">
-                Welcome Back
-              </h1>
-              <p className="text-gray-400">
-                Sign in to continue your fitness journey
-              </p>
-            </div>
+        {/* RIGHT FORM */}
+        <div className="auth-right w-full lg:w-1/2 flex flex-col items-center justify-center gap-6">
+          <div className="auth-logo mb-6">
+            <img src="/logo.jpeg" alt="Aipex Logo" className="h-[70px]" />
+          </div>
 
-            {/* Error */}
-            {error && (
-              <div className="mb-4 p-3 bg-red-600/20 border border-red-500 rounded-lg text-red-300 text-sm">
-                {error}
-              </div>
-            )}
+          <div className="auth-form-wrapper w-full px-6">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              {error && (
+                <div className="p-3 bg-red-600/20 border border-red-500 rounded-lg text-red-700 text-sm">
+                  {error}
+                </div>
+              )}
 
-            {/* Email */}
-            <div className="mb-5">
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-300 mb-2"
-              >
-                Email Address
-              </label>
-              <input
-                id="email"
-                type="email"
-                name="email"
-                placeholder="Enter your email"
-                value={form.email}
-                onChange={handleChange}
-                className="w-full px-4 py-3 bg-black/40 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white placeholder-gray-400"
-                required
-                disabled={isLoading}
-              />
-            </div>
-
-            {/* Password */}
-            <div className="mb-6">
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-300 mb-2"
-              >
-                Password
-              </label>
-              <div className="relative">
+              {/* EMAIL */}
+              <div className="auth-field relative">
                 <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  placeholder="Enter your password"
-                  value={form.password}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 pr-10 bg-black/40 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white placeholder-gray-400"
+                  type="email"
+                  id="email"
+                  value={formData.email}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
+                  className="auth-input peer placeholder-transparent w-full border border-gray-300 rounded-lg px-4 pt-5 pb-2 focus:outline-none focus:border-primary"
+                  placeholder="Email"
                   required
                   disabled={isLoading}
                 />
+                <label htmlFor="email" className="auth-label">
+                  Email
+                </label>
+              </div>
+
+              {/* PASSWORD */}
+              <div className="auth-field relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  value={formData.password}
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
+                  className="auth-input peer placeholder-transparent w-full border border-gray-300 rounded-lg px-4 pt-5 pb-2 focus:outline-none focus:border-primary"
+                  placeholder="Password"
+                  required
+                  disabled={isLoading}
+                />
+                <label htmlFor="password" className="auth-label">
+                  Password
+                </label>
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-200"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
                 >
-                  {showPassword ? "🙈" : "👁️"}
+                  {showPassword ? "👁️" : "👁️‍🗨️"}
                 </button>
               </div>
-            </div>
 
-            {/* Login Button */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 disabled:opacity-50"
-            >
-              {isLoading ? "Signing in..." : "Sign In"}
-            </button>
-
-            {/* Links */}
-            <div className="text-center mt-4">
-              <a
-                href="/forgot-password"
-                className="text-sm text-blue-400 hover:underline"
+              {/* LOGIN BUTTON */}
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="auth-button w-full py-3 bg-primary text-white font-bold rounded-lg hover:bg-red-700 transition"
               >
-                Forgot your password?
-              </a>
-            </div>
-            <div className="text-center mt-4 text-sm text-gray-400">
-              Don’t have an account?{" "}
-              <a href="/register" className="text-blue-400 hover:underline">
-                Create one
-              </a>
-            </div>
-          </form>
+                {isLoading ? "Signing in..." : "Log in"}
+              </button>
+
+              {/* SIGNUP LINK */}
+              <p className="auth-text text-center text-gray-500 text-sm">
+                Don’t have an account?{" "}
+                <a
+                  href="/register"
+                  className="auth-link text-primary font-semibold"
+                >
+                  Sign up
+                </a>
+              </p>
+
+              <div className="auth-divider text-center text-gray-400 text-sm py-2">
+                <span>Or continue with</span>
+              </div>
+
+              <div className="auth-socials flex gap-4 justify-center">
+                <button
+                  type="button"
+                  className="auth-social flex items-center gap-2 border border-gray-300 rounded-lg px-4 py-2 hover:bg-gray-100 transition"
+                >
+                  <FcGoogle className="w-6 h-6" /> Google
+                </button>
+                <button
+                  type="button"
+                  className="auth-social flex items-center gap-2 border border-gray-300 rounded-lg px-4 py-2 hover:bg-gray-100 transition"
+                >
+                  <FaFacebook className="w-6 h-6 text-blue-600" /> Facebook
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
-
-    
     </div>
   );
 }
