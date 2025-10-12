@@ -12,31 +12,38 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [user, setUser] = useState({ name: "Loading...", email: "Loading..." });
 
-  // ✅ Fetch logged-in user info from backend
+  // ✅ Load user from localStorage first, then backend
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          setUser({ name: "Guest", email: "guest@classbuzz.com" });
-          return;
+        // Step 1: Try localStorage first
+        const localName = localStorage.getItem("userName");
+        const localEmail = localStorage.getItem("userEmail");
+
+        if (localName && localEmail) {
+          setUser({ name: localName, email: localEmail });
+          return; // Stop here if already found
         }
 
-        const res = await axios.get("http://localhost:5000/api/users/me", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        // Step 2: Try backend if token available
+        const token = localStorage.getItem("token");
+        if (token) {
+          const res = await axios.get("http://localhost:5000/api/users/me", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
 
-        // Backend se aane wale user data
-        setUser({
-          name: res.data.name || "User",
-          email: res.data.email || "user@classbuzz.com",
-        });
-
-        // Optional: LocalStorage me bhi save karo
-        localStorage.setItem("userName", res.data.name);
-        localStorage.setItem("userEmail", res.data.email);
+          if (res.data?.name && res.data?.email) {
+            setUser({ name: res.data.name, email: res.data.email });
+            localStorage.setItem("userName", res.data.name);
+            localStorage.setItem("userEmail", res.data.email);
+          } else {
+            setUser({ name: "User", email: "user@classbuzz.com" });
+          }
+        } else {
+          setUser({ name: "Guest", email: "guest@classbuzz.com" });
+        }
       } catch (error) {
         console.error("❌ Error fetching user:", error);
         setUser({ name: "Guest", email: "guest@classbuzz.com" });
@@ -53,7 +60,7 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // ✅ Click outside close
+  // ✅ Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (!e.target.closest(".profile-dropdown")) setIsProfileOpen(false);
@@ -64,7 +71,7 @@ export default function Navbar() {
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
-  // ✅ Mock notifications (replace with backend later)
+  // ✅ Mock notifications
   const notifications = [
     {
       id: 1,
@@ -107,7 +114,7 @@ export default function Navbar() {
 
           {/* ✅ Right Section - Notifications & Profile */}
           <div className="flex items-center gap-2 sm:gap-4">
-            {/* Notifications */}
+            {/* 🔔 Notifications */}
             <div className="relative notification-dropdown">
               <button
                 onClick={() => setIsNotificationOpen(!isNotificationOpen)}
@@ -168,7 +175,7 @@ export default function Navbar() {
               )}
             </div>
 
-            {/* Profile Dropdown */}
+            {/* 👤 Profile Dropdown */}
             <div className="relative profile-dropdown">
               <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
@@ -227,9 +234,7 @@ export default function Navbar() {
                     <div className="h-px bg-gray-200 my-2"></div>
                     <button
                       onClick={() => {
-                        localStorage.removeItem("token");
-                        localStorage.removeItem("userName");
-                        localStorage.removeItem("userEmail");
+                        localStorage.clear();
                         window.location.href = "/login";
                       }}
                       className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-50 transition-colors text-red-600 hover:text-red-700"
