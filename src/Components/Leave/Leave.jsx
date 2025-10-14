@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Calendar, FileText, User, X } from "lucide-react";
 
-export default function LeaveApplication() {
+export default function Leave() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [formData, setFormData] = useState({
     fromDate: "2025-10-08",
