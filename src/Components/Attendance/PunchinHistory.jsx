@@ -120,8 +120,8 @@ const PunchinHistory = ({ onNavigateBack }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen ml-[320px]  bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <div className="max-w-6xl mt-[100px] mx-auto">
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden mb-6">
           <div className="bg-gradient-to-r from-indigo-600 to-blue-500 p-6">
             <div className="flex justify-between items-center mb-2">
