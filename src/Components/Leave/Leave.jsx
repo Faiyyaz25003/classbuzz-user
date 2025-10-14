@@ -6,6 +6,8 @@ import { Calendar, FileText, User, X } from "lucide-react";
 export default function Leave() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [formData, setFormData] = useState({
+    userName: "",
+    email: "", // added email field
     fromDate: "2025-10-08",
     toDate: "2025-10-08",
     leaveType: "",
@@ -25,21 +27,18 @@ export default function Leave() {
 
   const [approvers, setApprovers] = useState([]);
 
-  // Fetch all users dynamically
+  // Fetch approvers
   useEffect(() => {
     const fetchApprovers = async () => {
       try {
         const res = await fetch("http://localhost:5000/api/users");
         const data = await res.json();
         if (!res.ok) throw new Error("Failed to fetch users");
-
-        // Format: "Name (Position)"
         setApprovers(data.map((user) => `${user.name} (${user.positions})`));
       } catch (error) {
         console.error("Error fetching approvers:", error);
       }
     };
-
     fetchApprovers();
   }, []);
 
@@ -61,6 +60,8 @@ export default function Leave() {
 
   const handleCancel = () => {
     setFormData({
+      userName: "",
+      email: "",
       fromDate: "2025-10-08",
       toDate: "2025-10-08",
       leaveType: "",
@@ -78,8 +79,22 @@ export default function Leave() {
   };
 
   const handleSubmit = async () => {
-    if (!formData.leaveType || !formData.approver || !formData.reason.trim()) {
+    // Basic validation
+    if (
+      !formData.userName ||
+      !formData.email ||
+      !formData.leaveType ||
+      !formData.approver ||
+      !formData.reason.trim()
+    ) {
       alert("Please fill in all required fields");
+      return;
+    }
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      alert("Please enter a valid email address");
       return;
     }
 
@@ -89,6 +104,8 @@ export default function Leave() {
     }
 
     const formPayload = new FormData();
+    formPayload.append("userName", formData.userName);
+    formPayload.append("email", formData.email); // include email
     formPayload.append("fromDate", formData.fromDate);
     formPayload.append("toDate", formData.toDate);
     formPayload.append("leaveType", formData.leaveType);
@@ -161,6 +178,38 @@ export default function Leave() {
 
             {/* Modal Body */}
             <div className="p-8 space-y-6">
+              {/* Your Name */}
+              <div className="space-y-2">
+                <label className="block text-gray-700 font-semibold flex items-center gap-2">
+                  <User className="w-4 h-4 text-blue-500" />
+                  Your Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="userName"
+                  value={formData.userName}
+                  onChange={handleInputChange}
+                  placeholder="Enter your full name"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                />
+              </div>
+
+              {/* Email */}
+              <div className="space-y-2">
+                <label className="block text-gray-700 font-semibold flex items-center gap-2">
+                  <User className="w-4 h-4 text-blue-500" />
+                  Email <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  placeholder="Enter your email address"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                />
+              </div>
+
               {/* Dates */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {["fromDate", "toDate"].map((field, idx) => (
@@ -216,7 +265,7 @@ export default function Leave() {
                     <option value="">Select Approver</option>
                     {approvers.map((approver, index) => (
                       <option key={index} value={approver}>
-                        {approver} {/* This will show "John Doe (Manager)" */}
+                        {approver}
                       </option>
                     ))}
                   </select>
