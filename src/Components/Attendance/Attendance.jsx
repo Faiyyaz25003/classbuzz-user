@@ -1,10 +1,11 @@
 
 
+
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 
-const Attendance = ({ onNavigateToHistory }) => {
+const Attendance = () => {
   const [punchInTime, setPunchInTime] = useState("--:--:--");
   const [punchOutTime, setPunchOutTime] = useState("--:--:--");
   const [punchInLocation, setPunchInLocation] = useState("Not punched in yet");
@@ -18,7 +19,7 @@ const Attendance = ({ onNavigateToHistory }) => {
   const [stream, setStream] = useState(null);
 
   const router = useRouter();
-  const backendURL = "http://localhost:5000/api/attendance"; // 👈 backend base URL
+  const backendURL = "http://localhost:5000/api/attendance";
 
   const PunchHistory = () => router.push("/PunchinHistory");
 
@@ -105,7 +106,6 @@ const Attendance = ({ onNavigateToHistory }) => {
     openCamera("out");
   };
 
-  // ✅ Function to save Punch data to backend
   const savePunch = async (type, time, location, photo) => {
     try {
       const res = await fetch(`${backendURL}/punch`, {
@@ -116,9 +116,7 @@ const Attendance = ({ onNavigateToHistory }) => {
 
       const data = await res.json();
       if (res.ok) {
-        alert(
-          `${type === "in" ? "Punch In" : "Punch Out"} saved successfully!`
-        );
+        alert(`${type === "in" ? "Punch In" : "Punch Out"} saved successfully!`);
       } else {
         alert(`Failed: ${data.message || "Server error"}`);
       }
@@ -139,13 +137,13 @@ const Attendance = ({ onNavigateToHistory }) => {
   };
 
   return (
-    <div className="min-h-screen mt-[50px] ml-[100px] bg-gray-50 p-4">
-      <div className="w-full max-w-4xl mx-auto bg-white rounded-lg shadow-sm border border-gray-200">
+    <div className="min-h-screen ml-[100px] bg-gray-50 p-4">
+      <div className="w-full max-w-4xl mt-[70px] mx-auto bg-white rounded-lg shadow-sm border border-gray-200">
         {/* Header */}
         <div className="border-b border-gray-200 p-4 flex justify-between items-center">
           <button
             onClick={PunchHistory}
-            className="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors font-medium"
+            className="px-6 py-2 bg-gradient-to-r from-[#0f4c5c] via-[#1e88a8] to-[#2596be] text-white rounded-mdtransition-colors font-medium"
           >
             Punch History
           </button>
@@ -163,7 +161,7 @@ const Attendance = ({ onNavigateToHistory }) => {
           <div className="mb-6">
             <div className="flex items-center gap-4 mb-3">
               <label className="text-base font-bold text-gray-900 min-w-[180px]">
-                Punch in Time:
+                Punch In Time:
               </label>
               <div className="flex-1 p-3 bg-gray-100 rounded-md border border-gray-300 text-base font-mono text-gray-900">
                 {punchInTime}
@@ -172,14 +170,14 @@ const Attendance = ({ onNavigateToHistory }) => {
 
             <div className="flex items-center gap-4 mb-3">
               <label className="text-base font-bold text-gray-900 min-w-[180px]">
-                Punch in Location:
+                Punch In Location:
               </label>
               <div className="flex-1 p-3 bg-gray-100 rounded-md border border-gray-300 text-sm text-gray-700">
                 {punchInLocation}
               </div>
               <button
                 onClick={handleRefreshInLocation}
-                className="p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+                className="p-2 bg-gradient-to-r from-[#0f4c5c] via-[#1e88a8] to-[#2596be] text-white rounded-md transition-colors"
               >
                 🔄
               </button>
@@ -207,13 +205,14 @@ const Attendance = ({ onNavigateToHistory }) => {
           <div className="flex gap-4 justify-center my-8">
             <button
               onClick={handlePunchIn}
-              className="px-8 py-3 rounded-lg font-semibold bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center gap-2"
+              className="px-8 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2 bg-gradient-to-r from-[#0f4c5c] via-[#1e88a8] to-[#2596be] text-white"
             >
               Punch In
             </button>
+
             <button
               onClick={handlePunchOut}
-              className="px-8 py-3 rounded-lg font-semibold bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center gap-2"
+              className="px-8 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2 bg-gradient-to-r from-[#0f4c5c] via-[#1e88a8] to-[#2596be] text-white"
             >
               Punch Out
             </button>
@@ -239,7 +238,7 @@ const Attendance = ({ onNavigateToHistory }) => {
               </div>
               <button
                 onClick={handleRefreshOutLocation}
-                className="p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+                className="p-2 bg-gradient-to-r from-[#0f4c5c] via-[#1e88a8] to-[#2596be] text-white rounded-md transition-colors"
               >
                 🔄
               </button>
@@ -269,7 +268,7 @@ const Attendance = ({ onNavigateToHistory }) => {
       {showCamera && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
-            <div className="bg-gradient-to-r from-indigo-600 to-blue-500 p-4 flex justify-between items-center">
+            <div className="bg-gradient-to-r from-[#0f4c5c] via-[#1e88a8] to-[#2596be] p-4 flex justify-between items-center">
               <h2 className="text-xl font-bold text-white">
                 {cameraType === "in" ? "Punch In" : "Punch Out"} Photo
               </h2>
@@ -290,13 +289,13 @@ const Attendance = ({ onNavigateToHistory }) => {
               <div className="flex gap-3 mt-4">
                 <button
                   onClick={capturePhoto}
-                  className="flex-1 py-3 bg-gradient-to-r from-indigo-600 to-blue-500 text-white rounded-lg font-semibold hover:from-indigo-700 hover:to-blue-600 transition-all shadow-lg flex items-center justify-center gap-2"
+                  className="flex-1 py-3 bg-gradient-to-r from-[#0f4c5c] via-[#1e88a8] to-[#2596be] text-white rounded-lg font-semibold transition-all shadow-lg flex items-center justify-center gap-2"
                 >
                   ⏺ Capture Photo
                 </button>
                 <button
                   onClick={closeCamera}
-                  className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+                  className="px-6 py-3 bg-gradient-to-r from-[#0f4c5c] via-[#1e88a8] to-[#2596be] text-gray-700 rounded-lg font-semibold transition-colors"
                 >
                   Cancel
                 </button>
