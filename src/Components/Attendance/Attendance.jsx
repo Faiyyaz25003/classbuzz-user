@@ -1,6 +1,4 @@
 
-
-
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -26,14 +24,29 @@ const Attendance = () => {
   const getCurrentTime = () =>
     new Date().toLocaleTimeString("en-US", { hour12: false });
 
+  // 🟢 UPDATED FUNCTION — Get readable location name
   const getCurrentLocation = () => {
     return new Promise((resolve) => {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
-          (position) => {
+          async (position) => {
             const lat = position.coords.latitude;
             const lon = position.coords.longitude;
-            resolve(`${lat.toFixed(4)}, ${lon.toFixed(4)}`);
+
+            try {
+              const response = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
+              );
+              const data = await response.json();
+              if (data && data.display_name) {
+                resolve(data.display_name);
+              } else {
+                resolve("Location name unavailable");
+              }
+            } catch (error) {
+              console.error("Error fetching location name:", error);
+              resolve("Location unavailable");
+            }
           },
           () => resolve("Location unavailable")
         );
@@ -116,7 +129,9 @@ const Attendance = () => {
 
       const data = await res.json();
       if (res.ok) {
-        alert(`${type === "in" ? "Punch In" : "Punch Out"} saved successfully!`);
+        alert(
+          `${type === "in" ? "Punch In" : "Punch Out"} saved successfully!`
+        );
       } else {
         alert(`Failed: ${data.message || "Server error"}`);
       }
