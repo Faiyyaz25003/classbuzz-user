@@ -14,6 +14,12 @@ export default function Documents() {
     pan: false,
   });
 
+  const [uploading, setUploading] = useState({
+    aadhaarFront: false,
+    aadhaarBack: false,
+    pan: false,
+  });
+
   const handleFileChange = (e, type) => {
     const file = e.target.files[0];
     if (file) {
@@ -22,14 +28,40 @@ export default function Documents() {
     }
   };
 
-  const handleUpload = (type) => {
-    if (files[type]) {
-      setUploaded((prev) => ({ ...prev, [type]: true }));
-      setTimeout(() => {
-        alert(`${files[type].name} uploaded successfully!`);
-      }, 300);
-    } else {
+  const handleUpload = async (type) => {
+    if (!files[type]) {
       alert("Please select a file first");
+      return;
+    }
+
+    setUploading((prev) => ({ ...prev, [type]: true }));
+
+    try {
+      const formData = new FormData();
+      formData.append("userId", "12345"); // Replace with dynamic userId if needed
+      formData.append(type, files[type]);
+
+      const response = await fetch(
+        "http://localhost:5000/api/documents/upload",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setUploaded((prev) => ({ ...prev, [type]: true }));
+        alert(`${files[type].name} uploaded successfully!`);
+      } else {
+        alert(data.message || "Upload failed");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong while uploading.");
+    } finally {
+      setUploading((prev) => ({ ...prev, [type]: false }));
     }
   };
 
@@ -75,9 +107,9 @@ export default function Documents() {
 
         <button
           onClick={() => handleUpload(type)}
-          disabled={!files[type]}
+          disabled={!files[type] || uploading[type] || uploaded[type]}
           className={`px-4 sm:px-6 py-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 font-medium text-sm sm:text-base whitespace-nowrap ${
-            files[type] && !uploaded[type]
+            files[type] && !uploaded[type] && !uploading[type]
               ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 shadow-md hover:shadow-lg"
               : uploaded[type]
               ? "bg-green-500 text-white cursor-default shadow-md"
@@ -89,6 +121,8 @@ export default function Documents() {
               <CheckCircle size={18} />
               <span className="hidden sm:inline">Uploaded</span>
             </>
+          ) : uploading[type] ? (
+            <span className="text-sm sm:text-base">Uploading...</span>
           ) : (
             <>
               <Upload size={18} />
@@ -101,7 +135,7 @@ export default function Documents() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-6 sm:py-12 px-4">
+    <div className="min-h-screen ml-[300px] mt-[50px] py-6 sm:py-12 px-4">
       <div className="max-w-4xl mx-auto">
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-2xl p-6 sm:p-10 border border-white/20">
           {/* Header */}
@@ -122,81 +156,18 @@ export default function Documents() {
             <DocumentUploadCard
               title="Aadhaar Card - Front Side"
               type="aadhaarFront"
-              icon={
-                <svg
-                  className="w-5 h-5 sm:w-6 sm:h-6 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"
-                  />
-                </svg>
-              }
+              icon={<FileText className="w-5 h-5 sm:w-6 sm:h-6 text-white" />}
             />
-
             <DocumentUploadCard
               title="Aadhaar Card - Back Side"
               type="aadhaarBack"
-              icon={
-                <svg
-                  className="w-5 h-5 sm:w-6 sm:h-6 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"
-                  />
-                </svg>
-              }
+              icon={<FileText className="w-5 h-5 sm:w-6 sm:h-6 text-white" />}
             />
-
             <DocumentUploadCard
               title="PAN Card"
               type="pan"
-              icon={
-                <svg
-                  className="w-5 h-5 sm:w-6 sm:h-6 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-                  />
-                </svg>
-              }
+              icon={<FileText className="w-5 h-5 sm:w-6 sm:h-6 text-white" />}
             />
-          </div>
-
-          {/* Info Note */}
-          <div className="mt-6 sm:mt-8 p-4 sm:p-5 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
-            <div className="flex items-start gap-3">
-              <div className="w-5 h-5 sm:w-6 sm:h-6 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                <span className="text-white text-xs sm:text-sm font-bold">
-                  i
-                </span>
-              </div>
-              <div>
-                <p className="text-xs sm:text-sm text-gray-700 leading-relaxed">
-                  <strong className="text-gray-900">Important:</strong> Ensure
-                  all documents are clear and readable. Accepted formats:{" "}
-                  <span className="font-semibold">JPG, PNG, PDF</span> (Max
-                  size: 5MB per file)
-                </p>
-              </div>
-            </div>
           </div>
 
           {/* Submit Button */}

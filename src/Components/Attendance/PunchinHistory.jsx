@@ -14,7 +14,7 @@ const PunchinHistory = () => {
 
   const backendURL = "http://localhost:5000/api/attendance";
 
-  useEffect(() => {
+  useEffect(() => {          
     const fetchData = async () => {
       try {
         const response = await axios.get(`${backendURL}/history`);
