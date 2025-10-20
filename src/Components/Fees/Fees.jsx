@@ -1,8 +1,7 @@
-
 "use client";
 import React, { useState, useEffect } from "react";
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable"; // ✅ Correct plugin import
+import autoTable from "jspdf-autotable"; // ✅ Correct import
 import {
   Receipt,
   Calendar,
@@ -47,14 +46,12 @@ export default function Fees() {
     setUser(userFromStorage);
 
     try {
-      // Fetch fee records
       const feesRes = await fetch(
         `http://localhost:5000/api/fees/user/${userId}`
       );
       const feesData = await feesRes.json();
-      setFees(feesData || []);
+      setFees(Array.isArray(feesData) ? feesData : []);
 
-      // Fetch user info
       const usersRes = await fetch("http://localhost:5000/api/users");
       const usersData = await usersRes.json();
       const currentUser = usersData.find((u) => u._id === userId);
@@ -72,9 +69,11 @@ export default function Fees() {
     fetchUserFees();
   }, []);
 
-  const totalPaid = fees.reduce((sum, f) => sum + (f.amount || 0), 0);
+  const totalPaid = Array.isArray(fees)
+    ? fees.reduce((sum, f) => sum + (f.amount || 0), 0)
+    : 0;
 
-  // 🧾 Generate and download PDF
+  // ✅ Generate and download PDF receipt
   const handleDownload = (receipt, index) => {
     const doc = new jsPDF();
 
@@ -143,7 +142,6 @@ export default function Fees() {
     doc.text("Authorized Signature:", 150, footerY + 10);
     doc.line(150, footerY + 15, 190, footerY + 15);
 
-    // Save PDF
     doc.save(
       `Receipt_${user?.name || "Student"}_${
         receipt.installment || "Payment"
