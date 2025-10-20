@@ -32,6 +32,7 @@ export default function Sidebar({ currentView, setCurrentView }) {
     { id: "dashboard", name: "Dashboard", icon: LayoutDashboard },
     { id: "attendance", name: "Attendance", icon: CalendarCheck },
     { id: "leave", name: "Apply Leave", icon: Clock },
+    { id: "fees", name: "Fees Record", icon: Clock },
     { id: "event", name: "Event", icon: FileText },
     { id: "schedule", name: "Schedule", icon: LayoutDashboard },
     { id: "record", name: "Recorded Lecture", icon: FileText },
@@ -122,3 +123,4 @@ export default function Sidebar({ currentView, setCurrentView }) {
     </div>
   );
 }
+

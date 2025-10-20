@@ -8,6 +8,7 @@ import Attendance from "../Attendance/Attendance";
 import Leave from "../Leave/Leave";
 import Documents from "../Documents/Documents";
 import UserId from "../UserId/UserId";
+import Fees from "../Fees/Fees";
 
 
 
@@ -20,6 +21,9 @@ export default function Home() {
         return <Dashboard />;
       case "attendance":
         return <Attendance />;
+      case "fees":
+        return <Fees />;
+
       case "leave":
         return <Leave />;
       case "documents":
