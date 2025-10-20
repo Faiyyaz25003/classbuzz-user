@@ -1,5 +1,8 @@
+
 "use client";
 import React, { useState, useEffect } from "react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable"; // ✅ Correct plugin import
 import {
   Receipt,
   Calendar,
@@ -71,6 +74,83 @@ export default function Fees() {
 
   const totalPaid = fees.reduce((sum, f) => sum + (f.amount || 0), 0);
 
+  // 🧾 Generate and download PDF
+  const handleDownload = (receipt, index) => {
+    const doc = new jsPDF();
+
+    // Title
+    doc.setFontSize(18);
+    doc.text("Official Fee Receipt", 105, 20, { align: "center" });
+
+    doc.setFontSize(12);
+    doc.text(
+      `Receipt No: RCP-${new Date(receipt.createdAt).getFullYear()}-${String(
+        index + 1
+      ).padStart(3, "0")}`,
+      20,
+      40
+    );
+    doc.text(
+      `Date: ${new Date(receipt.createdAt).toLocaleDateString("en-IN")}`,
+      150,
+      40
+    );
+
+    // Student Info
+    doc.text("Student Information", 20, 55);
+    autoTable(doc, {
+      startY: 60,
+      theme: "striped",
+      styles: { fontSize: 11 },
+      head: [["Field", "Details"]],
+      body: [
+        ["Name", user?.name || "—"],
+        ["User ID", user?.id || "—"],
+        ["Department", userInfo.departments?.join(", ") || "—"],
+        ["Email", userInfo.email || "—"],
+        ["Phone", userInfo.phone || "—"],
+        ["Position", userInfo.positions?.join(", ") || "—"],
+      ],
+    });
+
+    // Fee Details
+    const finalY = doc.lastAutoTable.finalY + 10;
+    doc.text("Payment Details", 20, finalY);
+    autoTable(doc, {
+      startY: finalY + 5,
+      theme: "striped",
+      styles: { fontSize: 11 },
+      head: [["Particular", "Details"]],
+      body: [
+        ["Amount Paid", `₹${receipt.amount?.toLocaleString("en-IN")}`],
+        ["Installment", receipt.installment || "—"],
+        ["Transaction ID", receipt._id || "—"],
+        [
+          "Payment Date",
+          new Date(receipt.createdAt).toLocaleDateString("en-IN"),
+        ],
+      ],
+    });
+
+    // Footer
+    const footerY = doc.lastAutoTable.finalY + 20;
+    doc.setFontSize(10);
+    doc.text(
+      "This is an official computer-generated receipt. Please keep it for your records.",
+      20,
+      footerY
+    );
+    doc.text("Authorized Signature:", 150, footerY + 10);
+    doc.line(150, footerY + 15, 190, footerY + 15);
+
+    // Save PDF
+    doc.save(
+      `Receipt_${user?.name || "Student"}_${
+        receipt.installment || "Payment"
+      }.pdf`
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -106,7 +186,7 @@ export default function Fees() {
           </div>
         </div>
 
-        {/* Student Info Card */}
+        {/* Student Info */}
         <div className="bg-white shadow-lg p-6 border-x border-gray-200">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-3">
@@ -182,7 +262,7 @@ export default function Fees() {
           </div>
         </div>
 
-        {/* Summary Card */}
+        {/* Summary */}
         <div className="bg-gradient-to-r from-green-50 to-emerald-50 shadow-lg p-6 border-x border-gray-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -207,7 +287,7 @@ export default function Fees() {
           </div>
         </div>
 
-        {/* Receipts List */}
+        {/* Payment History */}
         <div className="bg-white rounded-b-xl shadow-lg p-6 border border-gray-200">
           <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
             <FileText className="w-5 h-5 text-blue-600" />
@@ -233,7 +313,6 @@ export default function Fees() {
                   key={i}
                   className="border-2 border-gray-200 rounded-lg hover:border-blue-300 transition-all duration-200 overflow-hidden"
                 >
-                  {/* Receipt Header */}
                   <div className="bg-gradient-to-r from-gray-50 to-blue-50 px-6 py-4 border-b border-gray-200">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -250,17 +329,18 @@ export default function Fees() {
                           </p>
                         </div>
                       </div>
-                      <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium">
+                      <button
+                        onClick={() => handleDownload(f, i)}
+                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium"
+                      >
                         <Download className="w-4 h-4" />
                         Download
                       </button>
                     </div>
                   </div>
 
-                  {/* Receipt Body */}
                   <div className="p-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      {/* Amount */}
                       <div className="bg-green-50 p-4 rounded-lg border border-green-200">
                         <div className="flex items-center gap-2 mb-2">
                           <IndianRupee className="w-5 h-5 text-green-600" />
@@ -273,7 +353,6 @@ export default function Fees() {
                         </p>
                       </div>
 
-                      {/* Installment */}
                       <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                         <div className="flex items-center gap-2 mb-2">
                           <FileText className="w-5 h-5 text-blue-600" />
@@ -286,7 +365,6 @@ export default function Fees() {
                         </p>
                       </div>
 
-                      {/* Date */}
                       <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
                         <div className="flex items-center gap-2 mb-2">
                           <Calendar className="w-5 h-5 text-purple-600" />
@@ -304,7 +382,6 @@ export default function Fees() {
                       </div>
                     </div>
 
-                    {/* Transaction Details */}
                     {f._id && (
                       <div className="mt-4 pt-4 border-t border-gray-200">
                         <p className="text-xs text-gray-500 font-medium uppercase mb-1">
@@ -316,7 +393,6 @@ export default function Fees() {
                       </div>
                     )}
 
-                    {/* Official Stamp */}
                     <div className="mt-4 flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <CheckCircle className="w-5 h-5 text-green-600" />
@@ -338,7 +414,6 @@ export default function Fees() {
           )}
         </div>
 
-        {/* Footer Note */}
         <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <p className="text-sm text-gray-700 text-center">
             <strong>Note:</strong> This is an official computer-generated
