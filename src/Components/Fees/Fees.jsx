@@ -424,6 +424,7 @@
 //   );
 // }
 
+
 "use client";
 import React, { useState, useEffect } from "react";
 import jsPDF from "jspdf";
@@ -501,7 +502,6 @@ export default function Fees() {
     ? fees.reduce((sum, f) => sum + (f.amount || 0), 0)
     : 0;
 
-  // ✅ Generate and download PDF receipt
   const handleDownload = (receipt, index) => {
     const doc = new jsPDF();
 
@@ -595,26 +595,28 @@ export default function Fees() {
     <div className="min-h-screen ml-[320px] mt-[50px] bg-gray-50 p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-t-xl shadow-lg p-8 text-white">
+        <div className="bg-gradient-to-r from-blue-700 to-indigo-800 rounded-t-xl shadow-2xl p-8 text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl">
+              <div className="bg-white/25 backdrop-blur-md p-3 rounded-full shadow-lg">
                 <Receipt className="w-8 h-8 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold">Fee Receipts</h1>
-                <p className="text-blue-100 mt-1">Official Payment Records</p>
+                <h1 className="text-3xl font-extrabold tracking-wide">
+                  Fee Receipts
+                </h1>
+                <p className="text-blue-200 mt-1">Official Payment Records</p>
               </div>
             </div>
             <div className="text-right">
-              <p className="text-blue-100 text-sm">Academic Year</p>
-              <p className="text-xl font-bold">2024-25</p>
+              <p className="text-blue-200 text-sm font-medium">Academic Year</p>
+              <p className="text-2xl font-bold tracking-wide">2024-25</p>
             </div>
           </div>
         </div>
 
         {/* Student Info */}
-        <div className="bg-white shadow-lg p-6 border-x border-gray-200">
+        <div className="bg-white shadow-2xl p-6 border border-gray-200 rounded-xl mt-6 hover:shadow-xl transition-shadow duration-300">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-3">
               <div className="flex items-center gap-3">
@@ -690,32 +692,28 @@ export default function Fees() {
         </div>
 
         {/* Summary */}
-        <div className="bg-gradient-to-r from-green-50 to-emerald-50 shadow-lg p-6 border-x border-gray-200">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="bg-green-500 p-3 rounded-xl shadow-md">
-                <CheckCircle className="w-7 h-7 text-white" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600 font-medium uppercase">
-                  Total Amount Paid
-                </p>
-                <p className="text-3xl font-bold text-green-700">
-                  ₹{totalPaid.toLocaleString("en-IN")}
-                </p>
-              </div>
+        <div className="bg-gradient-to-r from-green-100 via-green-50 to-emerald-50 shadow-2xl p-6 border border-gray-200 rounded-xl mt-6 flex items-center justify-between transform hover:scale-105 transition-transform duration-300">
+          <div className="flex items-center gap-4">
+            <div className="bg-green-500 p-3 rounded-xl shadow-md">
+              <CheckCircle className="w-7 h-7 text-white" />
             </div>
-            <div className="text-right">
-              <p className="text-sm text-gray-600 font-medium">
-                Total Receipts
+            <div>
+              <p className="text-sm text-gray-600 font-medium uppercase">
+                Total Amount Paid
               </p>
-              <p className="text-2xl font-bold text-gray-800">{fees.length}</p>
+              <p className="text-3xl font-bold text-green-700">
+                ₹{totalPaid.toLocaleString("en-IN")}
+              </p>
             </div>
+          </div>
+          <div className="text-right">
+            <p className="text-sm text-gray-600 font-medium">Total Receipts</p>
+            <p className="text-2xl font-bold text-gray-800">{fees.length}</p>
           </div>
         </div>
 
         {/* Payment History */}
-        <div className="bg-white rounded-b-xl shadow-lg p-6 border border-gray-200">
+        <div className="bg-white rounded-b-xl shadow-2xl p-6 border border-gray-200 mt-6">
           <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
             <FileText className="w-5 h-5 text-blue-600" />
             Payment History
@@ -738,7 +736,7 @@ export default function Fees() {
               {fees.map((f, i) => (
                 <div
                   key={i}
-                  className="border-2 border-gray-200 rounded-lg hover:border-blue-300 transition-all duration-200 overflow-hidden"
+                  className="border-2 border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1"
                 >
                   <div className="bg-gradient-to-r from-gray-50 to-blue-50 px-6 py-4 border-b border-gray-200">
                     <div className="flex items-center justify-between">
@@ -768,7 +766,7 @@ export default function Fees() {
 
                   <div className="p-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                      <div className="bg-green-50 p-4 rounded-lg border border-green-200 flex flex-col items-start justify-center hover:bg-green-100 transition-colors duration-300">
                         <div className="flex items-center gap-2 mb-2">
                           <IndianRupee className="w-5 h-5 text-green-600" />
                           <p className="text-xs text-gray-600 font-bold uppercase">
@@ -780,7 +778,7 @@ export default function Fees() {
                         </p>
                       </div>
 
-                      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 flex flex-col items-start justify-center hover:bg-blue-100 transition-colors duration-300">
                         <div className="flex items-center gap-2 mb-2">
                           <FileText className="w-5 h-5 text-blue-600" />
                           <p className="text-xs text-gray-600 font-bold uppercase">
@@ -792,7 +790,7 @@ export default function Fees() {
                         </p>
                       </div>
 
-                      <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                      <div className="bg-purple-50 p-4 rounded-lg border border-purple-200 flex flex-col items-start justify-center hover:bg-purple-100 transition-colors duration-300">
                         <div className="flex items-center gap-2 mb-2">
                           <Calendar className="w-5 h-5 text-purple-600" />
                           <p className="text-xs text-gray-600 font-bold uppercase">
@@ -809,7 +807,6 @@ export default function Fees() {
                       </div>
                     </div>
 
-                    {/* ✅ New Section: Payment Details */}
                     <div className="mt-4 pt-4 border-t border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="flex items-center gap-2">
                         <CreditCard className="w-5 h-5 text-indigo-600" />
@@ -847,8 +844,8 @@ export default function Fees() {
           )}
         </div>
 
-        <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <p className="text-sm text-gray-700 text-center">
+        <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-xl p-6 text-center text-gray-700 shadow-inner">
+          <p className="text-sm font-medium">
             <strong>Note:</strong> This is an official computer-generated
             receipt. Please keep this for your records. For any queries, contact
             the accounts department.
