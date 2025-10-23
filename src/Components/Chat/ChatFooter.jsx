@@ -1,20 +1,39 @@
 
 "use client";
 import React, { useState } from "react";
-import { Send, Smile, Paperclip, Mic, BarChart, X } from "lucide-react";
+import {
+  Send,
+  Smile,
+  Paperclip,
+  Mic,
+  BarChart,
+  CalendarDays,
+  Camera,
+  X,
+} from "lucide-react";
 import EmojiPicker from "emoji-picker-react";
-import Poll from "./Pool";// ✅ Import your poll component
+import Poll from "./Pool";
+import CameraModal from "./CameraModal"; // ✅ Import CameraModal
+import { useRouter } from "next/navigation";
 
 export default function ChatFooter({ onSend }) {
+  const router = useRouter();
   const [message, setMessage] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
-  const [showPoll, setShowPoll] = useState(false); // ✅ For inline poll
+  const [showPoll, setShowPoll] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false); // ✅ Camera modal state
+  const [capturedImage, setCapturedImage] = useState(null); // ✅ Captured image preview
 
   const handleSend = () => {
-    if (message.trim()) {
-      onSend(message);
+    if (message.trim() || capturedImage) {
+      // Send message + image
+      onSend({
+        text: message,
+        image: capturedImage,
+      });
       setMessage("");
+      setCapturedImage(null); // clear after send
       setShowEmojiPicker(false);
     }
   };
@@ -24,17 +43,39 @@ export default function ChatFooter({ onSend }) {
   };
 
   const handleAttachmentClick = (type) => {
-    if (type === "poll") {
-      setShowAttachMenu(false);
-      setShowPoll(true); // ✅ open inline poll
-      return;
-    }
     setShowAttachMenu(false);
+    switch (type) {
+      case "camera":
+        setIsCameraOpen(true); // ✅ Open camera modal
+        break;
+      case "document":
+        console.log("Document clicked");
+        break;
+      case "gallery":
+        console.log("Gallery clicked");
+        break;
+      case "location":
+        console.log("Location clicked");
+        break;
+      case "poll":
+        setShowPoll(true);
+        break;
+      case "event":
+        router.push("/calendar");
+        break;
+      default:
+        break;
+    }
+  };
+
+  // ✅ When photo is captured in modal
+  const handleCapture = (imageData) => {
+    setCapturedImage(imageData);
   };
 
   return (
     <div className="relative">
-      {/* ✅ Emoji Picker */}
+      {/* Emoji Picker */}
       {showEmojiPicker && (
         <div className="absolute bottom-20 right-20 z-50">
           <EmojiPicker
@@ -46,30 +87,35 @@ export default function ChatFooter({ onSend }) {
         </div>
       )}
 
-      {/* ✅ Attachment Menu */}
+      {/* Attachment Menu */}
       {showAttachMenu && (
-        <div className="absolute bottom-20 right-32 z-50 bg-white rounded-2xl shadow-2xl border border-slate-200 p-4 w-72">
+        <div className="absolute bottom-20 right-32 z-50 bg-white rounded-2xl shadow-2xl border border-slate-200 p-4 w-80">
           <div className="grid grid-cols-3 gap-3">
-            {/* Document */}
+            {/* 📷 Camera */}
+            <button
+              onClick={() => handleAttachmentClick("camera")}
+              className="flex flex-col items-center p-4 rounded-xl hover:bg-slate-50 transition-colors group"
+            >
+              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-2 group-hover:bg-green-200 transition-colors">
+                <Camera className="w-6 h-6 text-green-600" />
+              </div>
+              <span className="text-sm font-medium text-slate-700">Camera</span>
+            </button>
+
+            {/* 📄 Document */}
             <button
               onClick={() => handleAttachmentClick("document")}
               className="flex flex-col items-center p-4 rounded-xl hover:bg-slate-50 transition-colors group"
             >
               <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-2 group-hover:bg-blue-200 transition-colors">
-                <svg
-                  className="w-6 h-6 text-blue-600"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" />
-                </svg>
+                <Paperclip className="w-6 h-6 text-blue-600" />
               </div>
               <span className="text-sm font-medium text-slate-700">
                 Document
               </span>
             </button>
 
-            {/* Gallery */}
+            {/* 🖼️ Gallery */}
             <button
               onClick={() => handleAttachmentClick("gallery")}
               className="flex flex-col items-center p-4 rounded-xl hover:bg-slate-50 transition-colors group"
@@ -92,7 +138,7 @@ export default function ChatFooter({ onSend }) {
               </span>
             </button>
 
-            {/* Location */}
+            {/* 📍 Location */}
             <button
               onClick={() => handleAttachmentClick("location")}
               className="flex flex-col items-center p-4 rounded-xl hover:bg-slate-50 transition-colors group"
@@ -115,7 +161,7 @@ export default function ChatFooter({ onSend }) {
               </span>
             </button>
 
-            {/* Poll */}
+            {/* 📊 Poll */}
             <button
               onClick={() => handleAttachmentClick("poll")}
               className="flex flex-col items-center p-4 rounded-xl hover:bg-slate-50 transition-colors group"
@@ -125,28 +171,66 @@ export default function ChatFooter({ onSend }) {
               </div>
               <span className="text-sm font-medium text-slate-700">Poll</span>
             </button>
+
+            {/* 🗓️ Event */}
+            <button
+              onClick={() => handleAttachmentClick("event")}
+              className="flex flex-col items-center p-4 rounded-xl hover:bg-slate-50 transition-colors group"
+            >
+              <div className="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center mb-2 group-hover:bg-pink-200 transition-colors">
+                <CalendarDays className="w-6 h-6 text-pink-600" />
+              </div>
+              <span className="text-sm font-medium text-slate-700">Event</span>
+            </button>
           </div>
         </div>
       )}
 
-      {/* ✅ Poll Modal (Inline Popup) */}
+      {/* Poll Modal */}
       {showPoll && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-xl p-6">
-            {/* Close Button */}
             <button
               onClick={() => setShowPoll(false)}
               className="absolute top-3 right-3 p-2 rounded-full hover:bg-slate-100 text-slate-600 transition"
             >
               <X className="w-5 h-5" />
             </button>
-            {/* Embed Poll Form */}
             <Poll />
           </div>
         </div>
       )}
 
-      {/* ✅ Chat Footer */}
+      {/* ✅ Camera Modal */}
+      {isCameraOpen && (
+        <CameraModal
+          isOpen={isCameraOpen}
+          onClose={() => setIsCameraOpen(false)}
+          onCapture={handleCapture}
+        />
+      )}
+
+      {/* ✅ Captured Image Preview */}
+      {capturedImage && (
+        <div className="p-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img
+              src={capturedImage}
+              alt="Captured Preview"
+              className="w-20 h-20 rounded-lg object-cover border"
+            />
+            <span className="text-sm text-slate-600">Captured Image Ready</span>
+          </div>
+          <button
+            onClick={() => setCapturedImage(null)}
+            className="p-2 rounded-full hover:bg-slate-200 text-slate-600 transition"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      )}
+
+      {/* Chat Footer */}
       <div className="p-4 bg-white border-t border-slate-200">
         <div className="flex items-center justify-between max-w-5xl mx-auto space-x-3">
           <div className="flex-1 relative">
