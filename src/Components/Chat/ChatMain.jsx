@@ -1,5 +1,6 @@
 
 "use client";
+
 import { useState, useEffect } from "react";
 import axios from "axios";
 import LeftSidebar from "./LeftSidebar";
@@ -21,15 +22,14 @@ export default function ChatMain() {
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
-      if (window.innerWidth >= 768) {
-        setShowSidebar(true); // Desktop always show sidebar
-      }
+      if (window.innerWidth >= 768) setShowSidebar(true); // Desktop always show sidebar
     };
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Fetch users
   useEffect(() => {
     const fetchContacts = async () => {
       try {
@@ -55,6 +55,7 @@ export default function ChatMain() {
     fetchContacts();
   }, []);
 
+  // Handle selecting a contact
   const handleSelect = (contact) => {
     if (!verifiedUsers.includes(contact.id)) {
       const code = prompt(`Enter chat code for ${contact.name}:`);
@@ -62,13 +63,14 @@ export default function ChatMain() {
         alert("✅ Chat unlocked!");
         setVerifiedUsers((prev) => [...prev, contact.id]);
         setSelectedContact(contact);
-        if (isMobile) setShowSidebar(false); // Mobile: hide sidebar
+        if (isMobile) setShowSidebar(false); // Hide sidebar on mobile
       } else {
         alert("❌ Invalid code!");
+        return;
       }
     } else {
       setSelectedContact(contact);
-      if (isMobile) setShowSidebar(false); // Mobile: hide sidebar
+      if (isMobile) setShowSidebar(false); // Hide sidebar on mobile
     }
     setShowInfo(false); // Close info panel
   };
@@ -82,7 +84,7 @@ export default function ChatMain() {
   }
 
   return (
-    <div className="flex h-screen bg-slate-100 transition-all relative">
+    <div className="flex h-screen bg-slate-100 relative">
       {/* LeftSidebar */}
       {(showSidebar || !isMobile) && (
         <div
@@ -120,18 +122,44 @@ export default function ChatMain() {
       >
         <ChatWindow
           user={selectedContact}
-          onHeaderClick={() => setShowInfo(!showInfo)}
+          onHeaderClick={() => {
+            if (isMobile) setShowInfo(true); // mobile: open overlay
+            else setShowInfo((prev) => !prev); // desktop: toggle panel
+          }}
         />
       </div>
 
-      {/* ContactInfo panel */}
-      {!isMobile && showInfo && selectedContact && (
-        <div className="w-1/3 border-l bg-white transition-all duration-300">
-          <ContactInfo
-            user={selectedContact}
-            onClose={() => setShowInfo(false)}
-          />
-        </div>
+      {/* ContactInfo Panel */}
+      {selectedContact && (
+        <>
+          {/* Desktop right panel */}
+          {!isMobile && showInfo && (
+            <div className="w-1/3 border-l bg-white transition-all duration-300">
+              <ContactInfo
+                user={selectedContact}
+                onClose={() => setShowInfo(false)}
+              />
+            </div>
+          )}
+
+          {/* Mobile overlay */}
+          {isMobile && showInfo && (
+            <div className="fixed inset-0 bg-black/40 z-30 flex justify-end">
+              <div className="w-80 bg-white h-full shadow-xl p-4 relative">
+                <button
+                  onClick={() => setShowInfo(false)}
+                  className="absolute top-4 right-4 p-2 rounded-full bg-slate-200 hover:bg-slate-300"
+                >
+                  Back
+                </button>
+                <ContactInfo
+                  user={selectedContact}
+                  onClose={() => setShowInfo(false)}
+                />
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

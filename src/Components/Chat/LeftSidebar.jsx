@@ -9,7 +9,7 @@ export default function LeftSidebar({
   contacts,
   selectedContactId,
   setSelectedContact,
-  onClose, // ✅ mobile back button
+  onClose,
   isMobile,
 }) {
   const [search, setSearch] = useState("");
@@ -18,13 +18,18 @@ export default function LeftSidebar({
     c.name?.toLowerCase().includes(search.toLowerCase())
   );
 
+  // ✅ Function to handle contact selection cleanly
+  const handleSelectContact = (contact) => {
+    setSelectedContact(contact); // update parent state
+  };
+
   return (
     <div
       className={`fixed md:relative z-30 h-full w-full md:w-80 bg-gradient-to-b from-slate-50 to-white border-r border-slate-200 flex flex-col transition-transform duration-300 ${
         isMobile ? "md:translate-x-0" : ""
       }`}
     >
-      {/* Mobile Back button */}
+      {/* ✅ Mobile back button */}
       {isMobile && (
         <button
           onClick={onClose}
@@ -34,7 +39,7 @@ export default function LeftSidebar({
         </button>
       )}
 
-      {/* Header inside sidebar */}
+      {/* Header */}
       <div className="p-6 border-b border-slate-200">
         <h1 className="text-2xl font-bold text-slate-800 mb-4">Messages</h1>
         <div className="relative">
@@ -55,7 +60,7 @@ export default function LeftSidebar({
           filtered.map((contact) => (
             <div
               key={contact.id}
-              onClick={() => setSelectedContact(contact)}
+              onClick={() => handleSelectContact(contact)} // ✅ call function
               className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all duration-200 ${
                 selectedContactId === contact.id
                   ? "bg-blue-50 border border-blue-200"

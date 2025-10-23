@@ -1,26 +1,20 @@
 
+
 "use client";
-
 import React from "react";
-import { Phone, Video, MoreVertical, ArrowLeft } from "lucide-react";
+import { Phone, Video, MoreVertical } from "lucide-react";
 
-export default function Header({ user, onHeaderClick, onBackClick, isMobile }) {
+export default function Header({ user, onHeaderClick }) {
   if (!user) return null;
 
   return (
-    <div className="flex items-center justify-between p-4 bg-white border-b border-slate-200 shadow-sm">
-      {/* Left section */}
-      <div className="flex items-center space-x-4">
-        {/* Mobile back button */}
-        {isMobile && (
-          <button
-            onClick={onBackClick}
-            className="p-2 mr-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-        )}
-
+    <div className="flex items-center justify-between px-4 py-3 border-b bg-white shadow-sm relative">
+      {/* LEFT: User Info (clickable area) */}
+      <div
+        onClick={onHeaderClick}
+        className="flex items-center space-x-4 cursor-pointer hover:opacity-90 transition"
+      >
+        {/* Avatar */}
         <div className="relative">
           <img
             src={user.img}
@@ -29,6 +23,8 @@ export default function Header({ user, onHeaderClick, onBackClick, isMobile }) {
           />
           <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></span>
         </div>
+
+        {/* Name and status */}
         <div>
           <h2 className="font-bold text-slate-800 text-lg">{user.name}</h2>
           <p className="text-sm text-blue-500 flex items-center">
@@ -38,26 +34,23 @@ export default function Header({ user, onHeaderClick, onBackClick, isMobile }) {
         </div>
       </div>
 
-      {/* Right section: desktop only actions */}
-      {!isMobile && (
-        <div className="flex items-center space-x-2">
-          <button className="p-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-600 transition-colors">
-            <Phone className="w-5 h-5" />
-          </button>
-          <button className="p-2.5 rounded-xl bg-green-50 hover:bg-green-100 text-green-600 transition-colors">
-            <Video className="w-5 h-5" />
-          </button>
-          <button className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors">
-            <MoreVertical className="w-5 h-5" />
-          </button>
-        </div>
-      )}
+      {/* RIGHT: Action Icons */}
+      <div className="flex items-center space-x-4 text-gray-600">
+        <button className="p-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-600 transition-colors">
+          <Phone className="w-5 h-5" />
+        </button>
 
-      {/* Optional: clickable area to open right panel */}
-      <div
-        className="absolute inset-0 cursor-pointer md:cursor-auto"
-        onClick={onHeaderClick}
-      />
+        <button className="p-2.5 rounded-xl bg-green-50 hover:bg-green-100 text-green-600 transition-colors">
+          <Video className="w-5 h-5" />
+        </button>
+
+        <button
+          title="More Options"
+          className="p-2 rounded-full hover:bg-gray-100 transition"
+        >
+          <MoreVertical size={20} />
+        </button>
+      </div>
     </div>
   );
 }
