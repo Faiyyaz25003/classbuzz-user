@@ -1,9 +1,10 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Send, Smile, Paperclip, Mic } from "lucide-react";
+import React, { useState } from "react";
 import Header from "./Header";
+import ChatMessages from "./ChatMessages";
+import ChatFooter from "./ChatFooter";
 
 export default function ChatWindow({
   user,
@@ -11,7 +12,33 @@ export default function ChatWindow({
   onBackClick,
   isMobile,
 }) {
-  const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState([
+    {
+      sender: "Victoria Ramos",
+      time: "1:31 pm",
+      text: "Class aptent taciti 🥰",
+    },
+    {
+      sender: "Victoria Ramos",
+      time: "1:32 pm",
+      text: "Nunc efficitur neque sit amet varius scelerisque.",
+    },
+    {
+      sender: "John Doe",
+      time: "1:34 pm",
+      text: "Nulla eget tortor tempor justo egestas scelerisque nec diam.",
+    },
+    {
+      sender: "Victoria Ramos",
+      time: "1:35 pm",
+      text: "Phasellus in arcu felis.",
+    },
+    {
+      sender: "John Doe",
+      time: "1:36 pm",
+      text: "Donec purus est, commodo in molestie et, vestibulum a enim.",
+    },
+  ]);
 
   if (!user)
     return (
@@ -42,101 +69,28 @@ export default function ChatWindow({
       </div>
     );
 
-  const messages = [
-    {
-      sender: "Victoria Ramos",
-      time: "1:31 pm",
-      text: "Class aptent taciti 🥰",
-    },
-    {
-      sender: "Victoria Ramos",
-      time: "1:32 pm",
-      text: "Nunc efficitur neque sit amet varius scelerisque.",
-    },
-    {
-      sender: "John Doe",
-      time: "1:34 pm",
-      text: "Nulla eget tortor tempor justo egestas scelerisque nec diam.",
-    },
-    {
-      sender: "Victoria Ramos",
-      time: "1:35 pm",
-      text: "Phasellus in arcu felis.",
-    },
-    {
-      sender: "John Doe",
-      time: "1:36 pm",
-      text: "Donec purus est, commodo in molestie et, vestibulum a enim.",
-    },
-  ];
+  const handleSendMessage = (newMsg) => {
+    setMessages((prev) => [
+      ...prev,
+      { sender: "John Doe", time: "Now", text: newMsg },
+    ]);
+  };
 
   return (
     <div className="flex-1 flex flex-col bg-gradient-to-br from-slate-50 to-slate-100 h-screen">
-      {/* ✅ Header: pass mobile props */}
+      {/* Header */}
       <Header
         user={user}
-        onHeaderClick={onHeaderClick} // open right panel
-        onBackClick={onBackClick} // mobile back button
-        isMobile={isMobile} // detect mobile
+        onHeaderClick={onHeaderClick}
+        onBackClick={onBackClick}
+        isMobile={isMobile}
       />
 
-      <div className="flex-1 p-6 overflow-y-auto space-y-4">
-        {messages.map((msg, idx) => (
-          <div
-            key={idx}
-            className={`flex ${
-              msg.sender === "John Doe" ? "justify-end" : "justify-start"
-            }`}
-          >
-            <div
-              className={`max-w-md ${
-                msg.sender === "John Doe"
-                  ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-2xl rounded-tr-md"
-                  : "bg-white text-slate-800 rounded-2xl rounded-tl-md shadow-sm"
-              } p-4 transition-all hover:shadow-md`}
-            >
-              <p className="text-sm leading-relaxed">{msg.text}</p>
-              <span
-                className={`text-xs mt-2 block ${
-                  msg.sender === "John Doe" ? "text-blue-100" : "text-slate-400"
-                }`}
-              >
-                {msg.time}
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* ✅ Separate Messages Component */}
+      <ChatMessages messages={messages} currentUser="John Doe" />
 
-      {/* Input */}
-      <div className="p-4 bg-white border-t border-slate-200">
-        <div className="flex items-center space-x-3 max-w-5xl mx-auto">
-          <button className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors">
-            <Paperclip className="w-5 h-5" />
-          </button>
-
-          <div className="flex-1 relative">
-            <input
-              type="text"
-              placeholder="Type your message..."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              className="w-full px-5 py-3 pr-12 rounded-2xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition-all"
-            />
-            <button className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg hover:bg-slate-200 text-slate-500 transition-colors">
-              <Smile className="w-5 h-5" />
-            </button>
-          </div>
-
-          <button className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors">
-            <Mic className="w-5 h-5" />
-          </button>
-
-          <button className="px-5 py-3 rounded-2xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold transition-all shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40">
-            <Send className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
+      {/* ✅ Separate Footer Component */}
+      <ChatFooter onSend={handleSendMessage} />
     </div>
   );
 }
