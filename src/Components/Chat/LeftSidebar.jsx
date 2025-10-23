@@ -1,13 +1,16 @@
 
+
 "use client";
 
 import React, { useState } from "react";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 
 export default function LeftSidebar({
   contacts,
   selectedContactId,
   setSelectedContact,
+  onClose, // ✅ mobile back button
+  isMobile,
 }) {
   const [search, setSearch] = useState("");
 
@@ -16,7 +19,21 @@ export default function LeftSidebar({
   );
 
   return (
-    <div className="w-80 bg-gradient-to-b from-slate-50 to-white border-r border-slate-200 flex flex-col h-screen">
+    <div
+      className={`fixed md:relative z-30 h-full w-full md:w-80 bg-gradient-to-b from-slate-50 to-white border-r border-slate-200 flex flex-col transition-transform duration-300 ${
+        isMobile ? "md:translate-x-0" : ""
+      }`}
+    >
+      {/* Mobile Back button */}
+      {isMobile && (
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2 rounded-full bg-slate-200 hover:bg-slate-300 md:hidden z-40"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      )}
+
       {/* Header inside sidebar */}
       <div className="p-6 border-b border-slate-200">
         <h1 className="text-2xl font-bold text-slate-800 mb-4">Messages</h1>

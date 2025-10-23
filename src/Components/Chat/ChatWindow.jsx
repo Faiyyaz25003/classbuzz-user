@@ -1,12 +1,16 @@
 
-
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Send, Smile, Paperclip, Mic } from "lucide-react";
 import Header from "./Header";
 
-export default function ChatWindow({ user, onHeaderClick }) {
+export default function ChatWindow({
+  user,
+  onHeaderClick,
+  onBackClick,
+  isMobile,
+}) {
   const [message, setMessage] = useState("");
 
   if (!user)
@@ -68,8 +72,14 @@ export default function ChatWindow({ user, onHeaderClick }) {
 
   return (
     <div className="flex-1 flex flex-col bg-gradient-to-br from-slate-50 to-slate-100 h-screen">
-      <Header user={user} onHeaderClick={onHeaderClick} />{" "}
-      {/* ✅ clickable header */}
+      {/* ✅ Header: pass mobile props */}
+      <Header
+        user={user}
+        onHeaderClick={onHeaderClick} // open right panel
+        onBackClick={onBackClick} // mobile back button
+        isMobile={isMobile} // detect mobile
+      />
+
       <div className="flex-1 p-6 overflow-y-auto space-y-4">
         {messages.map((msg, idx) => (
           <div
@@ -97,6 +107,7 @@ export default function ChatWindow({ user, onHeaderClick }) {
           </div>
         ))}
       </div>
+
       {/* Input */}
       <div className="p-4 bg-white border-t border-slate-200">
         <div className="flex items-center space-x-3 max-w-5xl mx-auto">
