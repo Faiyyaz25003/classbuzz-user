@@ -16,17 +16,3 @@ const page = () => {
 export default page;
 
 
-
-
-// "use client";
-
-// import React from "react";
-// import ChatMain from "@/Components/Chat/ChatMain";
-
-// export default function Page() {
-//   return (
-//     <div>
-//       <ChatMain />
-//     </div>
-//   );
-// }
