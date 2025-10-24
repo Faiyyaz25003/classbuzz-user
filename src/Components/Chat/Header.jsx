@@ -10,7 +10,7 @@ import {
   Lock,
   X,
   Trash2,
-  MessageSquare,
+  MessageSquare,  
 } from "lucide-react";
 
 export default function Header({ user, onHeaderClick }) {
