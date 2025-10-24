@@ -45,7 +45,7 @@ export default function LeftSidebar({
       <div className="p-2 border-b border-slate-200 space-y-2 flex items-center justify-between">
         <div className="flex flex-col items-center justify-center">
           <div className="relative group">
-            <div className="w-50 h-15 rounded-full p-1 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 animate-pulse">
+            <div className="w-50 h-15 rounded-full p-1 bg-gradient-to-r from-[#0f4c5c] via-[#1e88a8] to-[#2596be] animate-pulse">
               <img
                 src="log.jpeg"
                 alt="Logo"
@@ -86,7 +86,7 @@ export default function LeftSidebar({
             onClick={() => setFilter(f)}
             className={`flex-shrink-0 text-sm py-1.5 px-3 rounded-lg transition-colors font-medium ${
               filter === f
-                ? "bg-blue-500 text-white"
+                ? "bg-gradient-to-r from-[#0f4c5c] via-[#1e88a8] to-[#2596be] text-white"
                 : "bg-slate-100 text-slate-700 hover:bg-slate-200"
             }`}
           >

@@ -316,7 +316,7 @@ export default function ChatFooter({ onSend }) {
             </button>
             <button
               onClick={handleSend}
-              className="p-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white transition-all shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40"
+              className="p-2.5 rounded-xl bg-gradient-to-r from-[#0f4c5c] via-[#1e88a8] to-[#2596be] text-white transition-all shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40"
             >
               <Send className="w-5 h-5" />
             </button>
