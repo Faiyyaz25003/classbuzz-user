@@ -42,9 +42,18 @@ export default function LeftSidebar({
       )}
 
       {/* Header */}
-      <div className="p-6 border-b border-slate-200 space-y-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-800 mb-0">Messages</h1>
-
+      <div className="p-2 border-b border-slate-200 space-y-2 flex items-center justify-between">
+        <div className="flex flex-col items-center justify-center">
+          <div className="relative group">
+            <div className="w-50 h-15 rounded-full p-1 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 animate-pulse">
+              <img
+                src="log.jpeg"
+                alt="Logo"
+                className="w-full h-full rounded-full border-4 border-white object-cover shadow-lg transform transition-transform duration-500 group-hover:scale-105 group-hover:rotate-2"
+              />
+            </div>
+          </div>
+        </div>
         {/* Icon Button for Create Group */}
         <button
           onClick={onOpenGroupModal}
