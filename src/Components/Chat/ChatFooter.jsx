@@ -40,17 +40,18 @@ export default function ChatFooter({ onSend }) {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const handleSend = () => {
-    if (message.trim() || capturedImage) {
-      onSend({
-        text: message,
-        image: capturedImage,
-      });
-      setMessage("");
-      setCapturedImage(null);
-      setShowEmojiPicker(false);
-    }
-  };
+const handleSend = () => {
+  if (message.trim() || capturedImage) {
+    const payload = capturedImage
+      ? { text: message.trim(), image: capturedImage }
+      : message.trim();
+    onSend(payload);
+    setMessage("");
+    setCapturedImage(null);
+    setShowEmojiPicker(false);
+  }
+};
+
 
   const handleEmojiClick = (emojiData) => {
     setMessage((prev) => prev + emojiData.emoji);
