@@ -33,37 +33,6 @@ export default function Login() {
     return () => clearInterval(interval);
   }, []);
 
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-  //   setIsLoading(true);
-  //   setError("");
-  //   try {
-  //     const res = await axios.post(
-  //       "http://localhost:5000/api/users/login",
-  //       formData
-  //     );
-  //     const { token, user } = res.data;
-
-  //     sessionStorage.setItem("token", token);
-  //     sessionStorage.setItem("role", user.role);
-  //     sessionStorage.setItem("name", user.name);
-
-  //     toast.success(`Welcome back, ${user.name}! 🎉`, {
-  //       position: "top-right",
-  //       autoClose: 2000,
-  //       onClose: () => router.push("/home"),
-  //     });
-  //   } catch (err) {
-  //     const errorMessage =
-  //       err.response?.data?.message || "Login failed. Please try again.";
-  //     setError(errorMessage);
-  //     toast.error(errorMessage, { position: "top-right", autoClose: 4000 });
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -75,13 +44,9 @@ export default function Login() {
       );
       const { token, user } = res.data;
 
-      // ✅ Save token and user info in sessionStorage
       sessionStorage.setItem("token", token);
       sessionStorage.setItem("role", user.role);
       sessionStorage.setItem("name", user.name);
-
-      // ✅ Also save user ID in localStorage for fee receipts
-      localStorage.setItem("userId", user._id);
 
       toast.success(`Welcome back, ${user.name}! 🎉`, {
         position: "top-right",
@@ -97,6 +62,9 @@ export default function Login() {
       setIsLoading(false);
     }
   };
+
+
+ 
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
