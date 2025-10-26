@@ -11,6 +11,9 @@ import Leave from "../Leave/Leave";
 import Documents from "../Documents/Documents";
 import UserId from "../UserId/UserId";
 import Fees from "../Fees/Fees";
+import Schedule from "../Schedule/Schedule";
+import Event from "../Event/Event";
+import Courses from "../Courses/Courses";
 
 export default function Home() {
   const [currentView, setCurrentView] = useState("dashboard");
@@ -25,6 +28,14 @@ export default function Home() {
         return <Fees />;
       case "leave":
         return <Leave />;
+      case "schedule":
+        return <Schedule />;
+      case "event":
+        return <Event />;
+         case "leave":
+        return <Leave />;
+      case "courses":
+        return <Courses />;
       case "documents":
         return <Documents />;
       case "userId":
