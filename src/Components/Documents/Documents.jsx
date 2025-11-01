@@ -50,7 +50,7 @@ export default function Documents() {
     <div className="min-h-screen ml-[350px] mt-[50px] bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-50 p-6 flex items-center justify-center">
       <div className="w-full max-w-2xl">
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-          <div className="bg-gradient-to-r from-violet-600 to-purple-600 p-8 text-center">
+          <div className="bg-gradient-to-r from-[#0f4c5c] to-[#1e88a8] p-8 text-center">
             <h2 className="flex items-center gap-2 text-3xl font-bold text-white mb-4">
               <Upload className="text-white" size={32} />
               Upload Documents
@@ -165,7 +165,7 @@ export default function Documents() {
             <button
               onClick={handleUpload}
               disabled={uploading}
-              className="w-full bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white py-4 rounded-xl font-semibold text-lg flex items-center justify-center gap-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+              className="w-full bg-gradient-to-r from-[#0f4c5c] to-[#1e88a8] text-white py-4 rounded-xl font-semibold text-lg flex items-center justify-center gap-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
             >
               {uploading ? (
                 <>
