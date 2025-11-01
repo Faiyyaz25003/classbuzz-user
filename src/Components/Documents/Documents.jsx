@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Upload, FileText, CheckCircle } from "lucide-react";
 
@@ -138,7 +139,6 @@ export default function Documents() {
     <div className="min-h-screen ml-[300px] mt-[50px] py-6 sm:py-12 px-4">
       <div className="max-w-4xl mx-auto">
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-2xl p-6 sm:p-10 border border-white/20">
-          {/* Header */}
           <div className="text-center mb-8 sm:mb-10">
             <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-[#0f4c5c] via-[#1e88a8] to-[#2596be] rounded-2xl sm:rounded-3xl mb-4 shadow-lg">
               <FileText className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
@@ -151,7 +151,6 @@ export default function Documents() {
             </p>
           </div>
 
-          {/* Upload Cards */}
           <div className="space-y-4">
             <DocumentUploadCard
               title="Aadhaar Card - Front Side"
@@ -170,7 +169,6 @@ export default function Documents() {
             />
           </div>
 
-          {/* Submit Button */}
           <button
             disabled={
               !uploaded.aadhaarFront || !uploaded.aadhaarBack || !uploaded.pan
