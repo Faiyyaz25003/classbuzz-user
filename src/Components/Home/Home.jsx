@@ -14,6 +14,7 @@ import Fees from "../Fees/Fees";
 import Schedule from "../Schedule/Schedule";
 import Event from "../Event/Event";
 import Courses from "../Courses/Courses";
+import Certificate from "../Certificate/Certificate";
 
 export default function Home() {
   const [currentView, setCurrentView] = useState("dashboard");
@@ -38,6 +39,8 @@ export default function Home() {
         return <Courses />;
       case "documents":
         return <Documents />;
+      case "certificate":
+        return <Certificate />;
       case "userId":
         return <UserId />;
       default:
