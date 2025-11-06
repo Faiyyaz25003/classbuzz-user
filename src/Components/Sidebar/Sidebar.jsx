@@ -39,7 +39,7 @@ export default function Sidebar({ currentView, setCurrentView }) {
     { id: "courses", name: "Courses", icon: FileText },
     { id: "documents", name: "Documents", icon: FileText },
     { id: "certificate", name: "Certificate", icon: FileText },
-    { id: "userId", name: "UserId", icon: FileText },
+    { id: "id", name: "UserId", icon: FileText },
   ];
 
   const handleLinkClick = (id) => {

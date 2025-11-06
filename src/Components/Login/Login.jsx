@@ -1,5 +1,4 @@
 
-
 "use client";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
@@ -33,6 +32,7 @@ export default function Login() {
     return () => clearInterval(interval);
   }, []);
 
+  // ✅ Updated handleSubmit with localStorage
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -42,16 +42,21 @@ export default function Login() {
         "http://localhost:5000/api/users/login",
         formData
       );
+
       const { token, user } = res.data;
 
+      // ✅ Save to sessionStorage (for session)
       sessionStorage.setItem("token", token);
       sessionStorage.setItem("role", user.role);
       sessionStorage.setItem("name", user.name);
 
+      // ✅ Save full user info to localStorage (persistent)
+      localStorage.setItem("user", JSON.stringify(user));
+
       toast.success(`Welcome back, ${user.name}! 🎉`, {
         position: "top-right",
         autoClose: 2000,
-        onClose: () => router.push("/home"),
+        onClose: () => router.push("/home"), // Redirect after toast
       });
     } catch (err) {
       const errorMessage =
@@ -62,9 +67,6 @@ export default function Login() {
       setIsLoading(false);
     }
   };
-
-
- 
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
@@ -92,13 +94,10 @@ export default function Login() {
               ))}
             </div>
 
-            {/* Slide Content */}
             <div className="absolute inset-x-0 bottom-0 p-6 sm:p-8 lg:p-10">
               <h2 className="text-white text-2xl sm:text-3xl lg:text-3xl font-bold drop-shadow-2xl mb-4 transform transition-all duration-500">
                 {services[currentSlide].label}
               </h2>
-
-              {/* Slide Indicators */}
               <div className="flex gap-2 mt-6">
                 {services.map((_, index) => (
                   <button
@@ -119,7 +118,6 @@ export default function Login() {
           {/* RIGHT FORM SECTION */}
           <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-6 sm:p-8 lg:p-10">
             <div className="w-full max-w-md">
-              {/* Logo */}
               <div className="text-center mb-6">
                 <img
                   src="/logo.jpeg"
@@ -135,14 +133,13 @@ export default function Login() {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Error Message */}
                 {error && (
                   <div className="p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
                     <p className="text-red-700 text-sm font-medium">{error}</p>
                   </div>
                 )}
 
-                {/* EMAIL INPUT */}
+                {/* EMAIL */}
                 <div className="space-y-2">
                   <label
                     htmlFor="email"
@@ -164,7 +161,7 @@ export default function Login() {
                   />
                 </div>
 
-                {/* PASSWORD INPUT */}
+                {/* PASSWORD */}
                 <div className="space-y-2">
                   <label
                     htmlFor="password"
@@ -250,7 +247,7 @@ export default function Login() {
 
                 {/* SIGNUP LINK */}
                 <p className="text-center text-gray-600 text-sm sm:text-base pt-4">
-                  Don't have an account?{" "}
+                  Don’t have an account?{" "}
                   <a
                     href="/register"
                     className="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition"

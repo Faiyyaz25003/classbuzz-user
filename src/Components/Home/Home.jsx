@@ -9,12 +9,12 @@ import Dashboard from "../Dashboard/Dashboard";
 import Attendance from "../Attendance/Attendance";
 import Leave from "../Leave/Leave";
 import Documents from "../Documents/Documents";
-import UserId from "../UserId/UserId";
 import Fees from "../Fees/Fees";
 import Schedule from "../Schedule/Schedule";
 import Event from "../Event/Event";
 import Courses from "../Courses/Courses";
 import Certificate from "../Certificate/Certificate";
+import Id from "../Id/Id";
 
 export default function Home() {
   const [currentView, setCurrentView] = useState("dashboard");
@@ -41,8 +41,8 @@ export default function Home() {
         return <Documents />;
       case "certificate":
         return <Certificate />;
-      case "userId":
-        return <UserId />;
+      case "id":
+        return <Id />;
       default:
         return <Dashboard />;
     }
