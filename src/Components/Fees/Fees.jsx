@@ -1,787 +1,515 @@
 
 
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable"; // ✅ Correct import
+import autoTable from "jspdf-autotable";
 import {
-  Receipt,
-  Calendar,
-  IndianRupee,
   FileText,
+  IndianRupee,
+  Calendar,
+  User,
+  Hash,
+  Download,
   Loader2,
   Mail,
   Phone,
-  Download,
-  CheckCircle,
-  Building2,
-  User,
-  Hash,
+  Search,
+  Filter,
+  TrendingUp,
   CreditCard,
-  Wallet,
+  CheckCircle2,
+  Eye,
+  X,
 } from "lucide-react";
 
-export default function Fees() {
-  const [user, setUser] = useState(null);
+export default function FeesReceipts() {
   const [fees, setFees] = useState([]);
-  const [userInfo, setUserInfo] = useState({});
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterMode, setFilterMode] = useState("all");
+  const [selectedFee, setSelectedFee] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
-  const fetchUserFees = async () => {
-    const userId =
-      typeof window !== "undefined" ? localStorage.getItem("userId") : null;
-    if (!userId) {
-      console.error("No user ID found in localStorage!");
-      setLoading(false);
-      return;
-    }
-
-    const userFromStorage = {
-      name:
-        typeof window !== "undefined"
-          ? sessionStorage.getItem("name") || "User"
-          : "User",
-      role:
-        typeof window !== "undefined"
-          ? sessionStorage.getItem("role") || "student"
-          : "student",
-      id: userId,
-    };
-    setUser(userFromStorage);
-
-    try {
-      const feesRes = await fetch(
-        `http://localhost:5000/api/fees/user/${userId}`
-      );
-      const feesData = await feesRes.json();
-      setFees(Array.isArray(feesData) ? feesData : []);
-
-      const usersRes = await fetch("http://localhost:5000/api/users");
-      const usersData = await usersRes.json();
-      const currentUser = usersData.find((u) => u._id === userId);
-      setUserInfo(currentUser || {});
-    } catch (err) {
-      console.error("Error fetching data:", err);
-      setFees([]);
-      setUserInfo({});
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // 🧭 Fetch Fees and Users Data
   useEffect(() => {
-    fetchUserFees();
+    const fetchData = async () => {
+      try {
+        const [feesRes, usersRes] = await Promise.all([
+          axios.get("http://localhost:5000/api/fees"),
+          axios.get("http://localhost:5000/api/users"),
+        ]);
+
+        const usersData = usersRes.data;
+        const feesData = feesRes.data;
+
+        // Create a map of users by ID for quick lookup
+        const usersMap = {};
+        usersData.forEach((user) => {
+          usersMap[user._id] = user;
+        });
+
+        // Merge user data with fees data
+        const mergedFees = feesData.map((fee) => {
+          const user = usersMap[fee.userId] || {};
+          return {
+            ...fee,
+            studentName: user.name || "N/A",
+            email: user.email || "N/A",
+            phone: user.phone || "N/A",
+            course: user.course || "N/A",
+          };
+        });
+
+        setFees(mergedFees);
+        setUsers(usersData);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        setLoading(false);
+      }
+    };
+    fetchData();
   }, []);
 
-  const totalPaid = Array.isArray(fees)
-    ? fees.reduce((sum, f) => sum + (f.amount || 0), 0)
-    : 0;
-
-  const handleDownload = (receipt, index) => {
-    const doc = new jsPDF();
-
-    // Title
-    doc.setFontSize(18);
-    doc.text("Official Fee Receipt", 105, 20, { align: "center" });
-
-    doc.setFontSize(12);
-    doc.text(
-      `Receipt No: RCP-${new Date(receipt.createdAt).getFullYear()}-${String(
-        index + 1
-      ).padStart(3, "0")}`,
-      20,
-      40
-    );
-    doc.text(
-      `Date: ${new Date(receipt.createdAt).toLocaleDateString("en-IN")}`,
-      150,
-      40
-    );
-
-    // Student Info
-    doc.text("Student Information", 20, 55);
-    autoTable(doc, {
-      startY: 60,
-      theme: "striped",
-      styles: { fontSize: 11 },
-      head: [["Field", "Details"]],
-      body: [
-        ["Name", user?.name || "—"],
-        ["User ID", user?.id || "—"],
-        ["Department", userInfo.departments?.join(", ") || "—"],
-        ["Email", userInfo.email || "—"],
-        ["Phone", userInfo.phone || "—"],
-        ["Position", userInfo.positions?.join(", ") || "—"],
-      ],
-    });
-
-    // Fee Details
-    const finalY = doc.lastAutoTable.finalY + 10;
-    doc.text("Payment Details", 20, finalY);
-    autoTable(doc, {
-      startY: finalY + 5,
-      theme: "striped",
-      styles: { fontSize: 11 },
-      head: [["Particular", "Details"]],
-      body: [
-        ["Amount Paid", `₹${receipt.amount?.toLocaleString("en-IN")}`],
-        ["Installment", receipt.installment || "—"],
-        ["Payment Method", receipt.paymentMethod || "—"],
-        ["Payment Name", receipt.paymentName || "—"],
-        [
-          "Payment Date",
-          new Date(receipt.createdAt).toLocaleDateString("en-IN"),
-        ],
-      ],
-    });
-
-    // Footer
-    const footerY = doc.lastAutoTable.finalY + 20;
-    doc.setFontSize(10);
-    doc.text(
-      "This is an official computer-generated receipt. Please keep it for your records.",
-      20,
-      footerY
-    );
-    doc.text("Authorized Signature:", 150, footerY + 10);
-    doc.line(150, footerY + 15, 190, footerY + 15);
-
-    doc.save(
-      `Receipt_${user?.name || "Student"}_${
-        receipt.installment || "Payment"
-      }.pdf`
-    );
+  // Calculate statistics
+  const stats = {
+    total: fees.length,
+    totalAmount: fees.reduce((sum, fee) => sum + fee.amount, 0),
+    avgAmount:
+      fees.length > 0
+        ? (
+            fees.reduce((sum, fee) => sum + fee.amount, 0) / fees.length
+          ).toFixed(2)
+        : 0,
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
-          <p className="text-lg text-gray-700 font-medium">
-            Loading receipts...
-          </p>
-        </div>
-      </div>
+  // Filter and search
+  const filteredFees = fees.filter((fee) => {
+    const matchesSearch =
+      (fee.studentName?.toLowerCase() || "").includes(
+        searchTerm.toLowerCase()
+      ) ||
+      (fee.email?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+      (fee.course?.toLowerCase() || "").includes(searchTerm.toLowerCase());
+    const matchesFilter =
+      filterMode === "all" || fee.paymentMode === filterMode;
+    return matchesSearch && matchesFilter;
+  });
+
+  // 🧾 Generate PDF Receipt
+  const generatePDF = (fee) => {
+    const doc = new jsPDF();
+
+    // Header with gradient effect
+    doc.setFillColor(37, 99, 235);
+    doc.rect(0, 0, 210, 40, "F");
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(24);
+    doc.text("FEES RECEIPT", 105, 20, { align: "center" });
+    doc.setFontSize(12);
+    doc.text("🎓 College Management System", 105, 30, { align: "center" });
+
+    // Reset text color
+    doc.setTextColor(0, 0, 0);
+
+    // Receipt details
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Receipt ID: ${fee._id}`, 14, 50);
+    doc.text(`Date: ${new Date(fee.date).toLocaleDateString()}`, 150, 50);
+
+    // Student Info Box
+    doc.setDrawColor(37, 99, 235);
+    doc.setLineWidth(0.5);
+    doc.rect(14, 60, 182, 50);
+
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text("Student Information", 20, 70);
+
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+    doc.text(`Name: ${fee.studentName}`, 20, 80);
+    doc.text(`Email: ${fee.email}`, 20, 88);
+    doc.text(`Phone: ${fee.phone}`, 20, 96);
+    doc.text(`Course: ${fee.course}`, 20, 104);
+
+    // Payment Details Box
+    doc.rect(14, 120, 182, 40);
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text("Payment Details", 20, 130);
+
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+    doc.text(`Payment Mode: ${fee.paymentMode}`, 20, 140);
+    doc.text(`Amount Paid: ₹${fee.amount}`, 20, 148);
+
+    // Total Amount (highlighted)
+    doc.setFillColor(240, 253, 244);
+    doc.rect(14, 170, 182, 20, "F");
+    doc.setFontSize(14);
+    doc.setTextColor(22, 163, 74);
+    doc.text(`Total Amount: ₹${fee.amount}`, 105, 182, { align: "center" });
+
+    // Footer
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    doc.text(
+      "✅ This is a computer-generated receipt. Thank you for your payment!",
+      105,
+      200,
+      { align: "center" }
     );
-  }
+    doc.text(
+      "For queries, contact: admin@college.edu | +91-9876543210",
+      105,
+      206,
+      { align: "center" }
+    );
+
+    doc.save(`Receipt_${fee.studentName}_${fee._id}.pdf`);
+  };
+
+  // View Details Modal
+  const viewDetails = (fee) => {
+    setSelectedFee(fee);
+    setShowModal(true);
+  };
 
   return (
-    <div className="min-h-screen ml-[320px] mt-[50px] bg-gray-50 p-6">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-blue-700 to-indigo-800 rounded-t-xl shadow-2xl p-8 text-white">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="bg-white/25 backdrop-blur-md p-3 rounded-full shadow-lg">
-                <Receipt className="w-8 h-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-extrabold tracking-wide">
-                  Fee Receipts
-                </h1>
-                <p className="text-blue-200 mt-1">Official Payment Records</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-blue-200 text-sm font-medium">Academic Year</p>
-              <p className="text-2xl font-bold tracking-wide">2024-25</p>
-            </div>
+    <div className="min-h-screen ml-[300px] mt-[50px] bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
+      {/* Header Section */}
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-3 rounded-xl shadow-lg">
+            <FileText className="text-white w-8 h-8" />
           </div>
-        </div>
-
-        {/* Student Info */}
-        <div className="bg-white shadow-2xl p-6 border border-gray-200 rounded-xl mt-6 hover:shadow-xl transition-shadow duration-300">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <User className="w-5 h-5 text-gray-400" />
-                <div>
-                  <p className="text-xs text-gray-500 uppercase font-medium">
-                    Student Name
-                  </p>
-                  <p className="text-base font-semibold text-gray-800">
-                    {user?.name || "—"}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <Hash className="w-5 h-5 text-gray-400" />
-                <div>
-                  <p className="text-xs text-gray-500 uppercase font-medium">
-                    User ID
-                  </p>
-                  <p className="text-base font-semibold text-gray-800">
-                    {user?.id || "—"}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <Building2 className="w-5 h-5 text-gray-400" />
-                <div>
-                  <p className="text-xs text-gray-500 uppercase font-medium">
-                    Department
-                  </p>
-                  <p className="text-base font-semibold text-gray-800">
-                    {userInfo.departments?.join(", ") || "—"}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <Mail className="w-5 h-5 text-gray-400" />
-                <div>
-                  <p className="text-xs text-gray-500 uppercase font-medium">
-                    Email
-                  </p>
-                  <p className="text-base text-gray-700">
-                    {userInfo.email || "—"}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <Phone className="w-5 h-5 text-gray-400" />
-                <div>
-                  <p className="text-xs text-gray-500 uppercase font-medium">
-                    Phone
-                  </p>
-                  <p className="text-base text-gray-700">
-                    {userInfo.phone || "—"}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <FileText className="w-5 h-5 text-gray-400" />
-                <div>
-                  <p className="text-xs text-gray-500 uppercase font-medium">
-                    Position
-                  </p>
-                  <p className="text-base text-gray-700">
-                    {userInfo.positions?.join(", ") || "—"}
-                  </p>
-                </div>
-              </div>
-            </div>
+          <div>
+            <h1 className="text-4xl font-bold text-gray-800">Fees Receipts</h1>
+            <p className="text-gray-600">
+              Manage and download payment receipts
+            </p>
           </div>
-        </div>
-
-        {/* Summary */}
-        <div className="bg-gradient-to-r from-green-100 via-green-50 to-emerald-50 shadow-2xl p-6 border border-gray-200 rounded-xl mt-6 flex items-center justify-between transform hover:scale-105 transition-transform duration-300">
-          <div className="flex items-center gap-4">
-            <div className="bg-green-500 p-3 rounded-xl shadow-md">
-              <CheckCircle className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 font-medium uppercase">
-                Total Amount Paid
-              </p>
-              <p className="text-3xl font-bold text-green-700">
-                ₹{totalPaid.toLocaleString("en-IN")}
-              </p>
-            </div>
-          </div>
-          <div className="text-right">
-            <p className="text-sm text-gray-600 font-medium">Total Receipts</p>
-            <p className="text-2xl font-bold text-gray-800">{fees.length}</p>
-          </div>
-        </div>
-
-        {/* Payment History */}
-        <div className="bg-white rounded-b-xl shadow-2xl p-6 border border-gray-200 mt-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-            <FileText className="w-5 h-5 text-blue-600" />
-            Payment History
-          </h2>
-
-          {fees.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <FileText className="w-10 h-10 text-gray-400" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                No Receipts Available
-              </h3>
-              <p className="text-gray-500">
-                Your payment receipts will appear here once payments are made.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {fees.map((f, i) => (
-                <div
-                  key={i}
-                  className="border-2 border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1"
-                >
-                  <div className="bg-gradient-to-r from-gray-50 to-blue-50 px-6 py-4 border-b border-gray-200">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-blue-100 p-2 rounded-lg">
-                          <Receipt className="w-5 h-5 text-blue-600" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-gray-700">
-                            Receipt No.
-                          </p>
-                          <p className="text-lg font-bold text-blue-600">
-                            RCP-{new Date(f.createdAt).getFullYear()}-
-                            {String(i + 1).padStart(3, "0")}
-                          </p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => handleDownload(f, i)}
-                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium"
-                      >
-                        <Download className="w-4 h-4" />
-                        Download
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div className="bg-green-50 p-4 rounded-lg border border-green-200 flex flex-col items-start justify-center hover:bg-green-100 transition-colors duration-300">
-                        <div className="flex items-center gap-2 mb-2">
-                          <IndianRupee className="w-5 h-5 text-green-600" />
-                          <p className="text-xs text-gray-600 font-bold uppercase">
-                            Amount Paid
-                          </p>
-                        </div>
-                        <p className="text-2xl font-bold text-green-700">
-                          ₹{f.amount?.toLocaleString("en-IN")}
-                        </p>
-                      </div>
-
-                      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 flex flex-col items-start justify-center hover:bg-blue-100 transition-colors duration-300">
-                        <div className="flex items-center gap-2 mb-2">
-                          <FileText className="w-5 h-5 text-blue-600" />
-                          <p className="text-xs text-gray-600 font-bold uppercase">
-                            Installment
-                          </p>
-                        </div>
-                        <p className="text-lg font-bold text-blue-700">
-                          {f.installment}
-                        </p>
-                      </div>
-
-                      <div className="bg-purple-50 p-4 rounded-lg border border-purple-200 flex flex-col items-start justify-center hover:bg-purple-100 transition-colors duration-300">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Calendar className="w-5 h-5 text-purple-600" />
-                          <p className="text-xs text-gray-600 font-bold uppercase">
-                            Payment Date
-                          </p>
-                        </div>
-                        <p className="text-base font-bold text-purple-700">
-                          {new Date(f.createdAt).toLocaleDateString("en-IN", {
-                            day: "2-digit",
-                            month: "short",
-                            year: "numeric",
-                          })}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 pt-4 border-t border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="flex items-center gap-2">
-                        <CreditCard className="w-5 h-5 text-indigo-600" />
-                        <span className="text-sm font-medium text-gray-700">
-                          <strong>Payment Method:</strong>{" "}
-                          {f.paymentMethod || "—"}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Wallet className="w-5 h-5 text-green-600" />
-                        <span className="text-sm font-medium text-gray-700">
-                          <strong>Payment Name:</strong> {f.paymentName || "—"}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="w-5 h-5 text-green-600" />
-                        <span className="text-sm font-semibold text-green-700">
-                          Payment Verified
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs text-gray-500">
-                          Authorized Signature
-                        </p>
-                        <div className="border-t-2 border-gray-400 w-32 mt-2"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-xl p-6 text-center text-gray-700 shadow-inner">
-          <p className="text-sm font-medium">
-            <strong>Note:</strong> This is an official computer-generated
-            receipt. Please keep this for your records. For any queries, contact
-            the accounts department.
-          </p>
         </div>
       </div>
+
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-blue-500 hover:shadow-xl transition-shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-500 text-sm font-medium">
+                Total Receipts
+              </p>
+              <p className="text-3xl font-bold text-gray-800 mt-2">
+                {stats.total}
+              </p>
+            </div>
+            <div className="bg-blue-100 p-4 rounded-xl">
+              <FileText className="w-8 h-8 text-blue-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-green-500 hover:shadow-xl transition-shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-500 text-sm font-medium">Total Amount</p>
+              <p className="text-3xl font-bold text-gray-800 mt-2 flex items-center gap-1">
+                <IndianRupee className="w-6 h-6" />
+                {stats.totalAmount.toLocaleString()}
+              </p>
+            </div>
+            <div className="bg-green-100 p-4 rounded-xl">
+              <TrendingUp className="w-8 h-8 text-green-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-purple-500 hover:shadow-xl transition-shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-500 text-sm font-medium">
+                Average Amount
+              </p>
+              <p className="text-3xl font-bold text-gray-800 mt-2 flex items-center gap-1">
+                <IndianRupee className="w-6 h-6" />
+                {stats.avgAmount.toLocaleString()}
+              </p>
+            </div>
+            <div className="bg-purple-100 p-4 rounded-xl">
+              <CreditCard className="w-8 h-8 text-purple-600" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Search and Filter Bar */}
+      <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1 relative">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Search by name, email, or course..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Filter className="text-gray-500 w-5 h-5" />
+            <select
+              value={filterMode}
+              onChange={(e) => setFilterMode(e.target.value)}
+              className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition bg-white"
+            >
+              <option value="all">All Payments</option>
+              <option value="Cash">Cash</option>
+              <option value="Online">Online</option>
+              <option value="Cheque">Cheque</option>
+              <option value="Card">Card</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Table Section */}
+      {loading ? (
+        <div className="flex justify-center items-center h-64 bg-white rounded-2xl shadow-lg">
+          <div className="text-center">
+            <Loader2 className="animate-spin text-blue-600 w-12 h-12 mx-auto mb-4" />
+            <p className="text-gray-600">Loading receipts...</p>
+          </div>
+        </div>
+      ) : filteredFees.length === 0 ? (
+        <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
+          <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <p className="text-xl text-gray-500">No fee records found</p>
+          <p className="text-gray-400 mt-2">
+            Try adjusting your search or filter
+          </p>
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead>
+                <tr className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+                  <th className="py-4 px-6 text-left font-semibold">#</th>
+                  <th className="py-4 px-6 text-left font-semibold">
+                    Student Details
+                  </th>
+                  <th className="py-4 px-6 text-left font-semibold">Course</th>
+                  <th className="py-4 px-6 text-left font-semibold">Amount</th>
+                  <th className="py-4 px-6 text-left font-semibold">Payment</th>
+                  <th className="py-4 px-6 text-left font-semibold">Date</th>
+                  <th className="py-4 px-6 text-center font-semibold">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {filteredFees.map((fee, index) => (
+                  <tr
+                    key={fee._id}
+                    className="hover:bg-blue-50 transition-colors"
+                  >
+                    <td className="py-4 px-6">
+                      <span className="bg-blue-100 text-blue-700 font-semibold px-3 py-1 rounded-full text-sm">
+                        {index + 1}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex items-start gap-3">
+                        <div className="bg-gradient-to-br from-blue-500 to-indigo-500 p-2 rounded-lg">
+                          <User className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-800">
+                            {fee.studentName}
+                          </p>
+                          <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
+                            <Mail className="w-3 h-3" /> {fee.email}
+                          </p>
+                          <p className="text-sm text-gray-500 flex items-center gap-1">
+                            <Phone className="w-3 h-3" /> {fee.phone}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-medium">
+                        {fee.course}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex items-center gap-1 text-green-600 font-bold text-lg">
+                        <IndianRupee className="w-5 h-5" />
+                        {fee.amount.toLocaleString()}
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex items-center gap-2">
+                        <CreditCard className="w-4 h-4 text-gray-500" />
+                        <span className="text-gray-700">{fee.paymentMode}</span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Calendar className="w-4 h-4" />
+                        {new Date(fee.date).toLocaleDateString()}
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          onClick={() => viewDetails(fee)}
+                          className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-lg hover:shadow-lg transition-all flex items-center gap-2 font-medium"
+                        >
+                          <Eye className="w-4 h-4" /> View
+                        </button>
+                        <button
+                          onClick={() => generatePDF(fee)}
+                          className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg hover:shadow-lg transition-all flex items-center gap-2 font-medium"
+                        >
+                          <Download className="w-4 h-4" /> PDF
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Details Modal */}
+      {showModal && selectedFee && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 rounded-t-2xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <CheckCircle2 className="w-8 h-8 text-white" />
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">
+                      Receipt Details
+                    </h2>
+                    <p className="text-blue-100 text-sm">
+                      Complete payment information
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="bg-white bg-opacity-20 hover:bg-opacity-30 p-2 rounded-lg transition"
+                >
+                  <X className="w-6 h-6 text-white" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-6">
+              <div className="bg-blue-50 rounded-xl p-4">
+                <p className="text-sm text-gray-600 mb-1">Receipt ID</p>
+                <p className="font-mono text-gray-800 font-semibold">
+                  {selectedFee._id}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-sm text-gray-600 mb-2 flex items-center gap-2">
+                    <User className="w-4 h-4" /> Student Name
+                  </p>
+                  <p className="font-semibold text-gray-800">
+                    {selectedFee.studentName}
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-sm text-gray-600 mb-2 flex items-center gap-2">
+                    <Mail className="w-4 h-4" /> Email
+                  </p>
+                  <p className="font-semibold text-gray-800">
+                    {selectedFee.email}
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-sm text-gray-600 mb-2 flex items-center gap-2">
+                    <Phone className="w-4 h-4" /> Phone
+                  </p>
+                  <p className="font-semibold text-gray-800">
+                    {selectedFee.phone}
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-sm text-gray-600 mb-2 flex items-center gap-2">
+                    <FileText className="w-4 h-4" /> Course
+                  </p>
+                  <p className="font-semibold text-gray-800">
+                    {selectedFee.course}
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-sm text-gray-600 mb-2 flex items-center gap-2">
+                    <CreditCard className="w-4 h-4" /> Payment Mode
+                  </p>
+                  <p className="font-semibold text-gray-800">
+                    {selectedFee.paymentMode}
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-sm text-gray-600 mb-2 flex items-center gap-2">
+                    <Calendar className="w-4 h-4" /> Date
+                  </p>
+                  <p className="font-semibold text-gray-800">
+                    {new Date(selectedFee.date).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border-2 border-green-200">
+                <p className="text-sm text-gray-600 mb-2">Amount Paid</p>
+                <p className="text-4xl font-bold text-green-600 flex items-center gap-2">
+                  <IndianRupee className="w-8 h-8" />
+                  {selectedFee.amount.toLocaleString()}
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    generatePDF(selectedFee);
+                    setShowModal(false);
+                  }}
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2 font-semibold"
+                >
+                  <Download className="w-5 h-5" />
+                  Download PDF
+                </button>
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="px-6 bg-gray-200 text-gray-700 py-3 rounded-xl hover:bg-gray-300 transition-all font-semibold"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-
-
-
-// "use client";
-// import React, { useState, useEffect } from "react";
-// import jsPDF from "jspdf";
-// import autoTable from "jspdf-autotable";
-// import {
-//   Receipt,
-//   Calendar,
-//   IndianRupee,
-//   FileText,
-//   Loader2,
-//   Mail,
-//   Phone,
-//   Download,
-//   CheckCircle,
-//   Building2,
-//   User,
-//   Hash,
-//   CreditCard,
-//   Wallet,
-// } from "lucide-react";
-
-// export default function Fees() {
-//   const [user, setUser] = useState(null);
-//   const [fees, setFees] = useState([]);
-//   const [userInfo, setUserInfo] = useState({});
-//   const [loading, setLoading] = useState(true);
-
-//   // ✅ Fetch user fees and user info from backend using ID stored in localStorage
-//   const fetchUserFees = async () => {
-//     const userId =
-//       typeof window !== "undefined" ? localStorage.getItem("userId") : null;
-//     if (!userId) {
-//       console.error("No user ID found in localStorage!");
-//       setLoading(false);
-//       return;
-//     }
-
-//     try {
-//       // Set user data from localStorage
-//       const storedUser = JSON.parse(localStorage.getItem("user"));
-//       setUser({
-//         id: userId,
-//         name: storedUser?.name || "User",
-//         role: storedUser?.role || "student",
-//       });
-
-//       // Fetch fees for this user
-//       const feesRes = await fetch(
-//         `http://localhost:5000/api/fees/user/${userId}`
-//       );
-//       const feesData = await feesRes.json();
-//       setFees(Array.isArray(feesData) ? feesData : []);
-
-//       // Fetch user details
-//       const usersRes = await fetch("http://localhost:5000/api/users");
-//       const usersData = await usersRes.json();
-//       const currentUser = usersData.find((u) => u._id === userId);
-//       setUserInfo(currentUser || {});
-//     } catch (err) {
-//       console.error("Error fetching data:", err);
-//       setFees([]);
-//       setUserInfo({});
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   useEffect(() => {
-//     fetchUserFees();
-//   }, []);
-
-//   // ✅ Calculate total paid amount
-//   const totalPaid = Array.isArray(fees)
-//     ? fees.reduce((sum, f) => sum + (f.amount || 0), 0)
-//     : 0;
-
-//   // ✅ Generate PDF Receipt
-//   const handleDownload = (receipt, index) => {
-//     const doc = new jsPDF();
-
-//     doc.setFontSize(18);
-//     doc.text("Official Fee Receipt", 105, 20, { align: "center" });
-
-//     doc.setFontSize(12);
-//     doc.text(
-//       `Receipt No: RCP-${new Date(receipt.createdAt).getFullYear()}-${String(
-//         index + 1
-//       ).padStart(3, "0")}`,
-//       20,
-//       40
-//     );
-//     doc.text(
-//       `Date: ${new Date(receipt.createdAt).toLocaleDateString("en-IN")}`,
-//       150,
-//       40
-//     );
-
-//     // Student Info
-//     doc.text("Student Information", 20, 55);
-//     autoTable(doc, {
-//       startY: 60,
-//       theme: "striped",
-//       styles: { fontSize: 11 },
-//       head: [["Field", "Details"]],
-//       body: [
-//         ["Name", user?.name || "—"],
-//         ["User ID", user?.id || "—"],
-//         ["Department", userInfo.departments?.join(", ") || "—"],
-//         ["Email", userInfo.email || "—"],
-//         ["Phone", userInfo.phone || "—"],
-//         ["Position", userInfo.positions?.join(", ") || "—"],
-//       ],
-//     });
-
-//     // Fee Details
-//     const finalY = doc.lastAutoTable.finalY + 10;
-//     doc.text("Payment Details", 20, finalY);
-//     autoTable(doc, {
-//       startY: finalY + 5,
-//       theme: "striped",
-//       styles: { fontSize: 11 },
-//       head: [["Particular", "Details"]],
-//       body: [
-//         ["Amount Paid", `₹${receipt.amount?.toLocaleString("en-IN")}`],
-//         ["Installment", receipt.installment || "—"],
-//         ["Payment Method", receipt.paymentMethod || "—"],
-//         ["Payment Name", receipt.paymentName || "—"],
-//         [
-//           "Payment Date",
-//           new Date(receipt.createdAt).toLocaleDateString("en-IN"),
-//         ],
-//       ],
-//     });
-
-//     const footerY = doc.lastAutoTable.finalY + 20;
-//     doc.setFontSize(10);
-//     doc.text(
-//       "This is an official computer-generated receipt. Please keep it for your records.",
-//       20,
-//       footerY
-//     );
-//     doc.text("Authorized Signature:", 150, footerY + 10);
-//     doc.line(150, footerY + 15, 190, footerY + 15);
-
-//     doc.save(
-//       `Receipt_${user?.name || "Student"}_${
-//         receipt.installment || "Payment"
-//       }.pdf`
-//     );
-//   };
-
-//   if (loading) {
-//     return (
-//       <div className="flex items-center justify-center min-h-screen bg-gray-50">
-//         <div className="text-center">
-//           <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
-//           <p className="text-lg text-gray-700 font-medium">
-//             Loading receipts...
-//           </p>
-//         </div>
-//       </div>
-//     );
-//   }
-
-//   return (
-//     <div className="min-h-screen ml-[320px] mt-[50px] bg-gray-50 p-6">
-//       <div className="max-w-6xl mx-auto">
-//         {/* Header */}
-//         <div className="bg-gradient-to-r from-blue-700 to-indigo-800 rounded-t-xl shadow-2xl p-8 text-white">
-//           <div className="flex items-center justify-between">
-//             <div className="flex items-center gap-4">
-//               <div className="bg-white/25 backdrop-blur-md p-3 rounded-full shadow-lg">
-//                 <Receipt className="w-8 h-8 text-white" />
-//               </div>
-//               <div>
-//                 <h1 className="text-3xl font-extrabold tracking-wide">
-//                   Fee Receipts
-//                 </h1>
-//                 <p className="text-blue-200 mt-1">Official Payment Records</p>
-//               </div>
-//             </div>
-//             <div className="text-right">
-//               <p className="text-blue-200 text-sm font-medium">Academic Year</p>
-//               <p className="text-2xl font-bold tracking-wide">2024-25</p>
-//             </div>
-//           </div>
-//         </div>
-
-//         {/* Student Info */}
-//         <div className="bg-white shadow-2xl p-6 border border-gray-200 rounded-xl mt-6">
-//           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-//             <div className="space-y-3">
-//               <Info label="Student Name" value={user?.name} Icon={User} />
-//               <Info label="User ID" value={user?.id} Icon={Hash} />
-//               <Info
-//                 label="Department"
-//                 value={userInfo.departments?.join(", ")}
-//                 Icon={Building2}
-//               />
-//             </div>
-//             <div className="space-y-3">
-//               <Info label="Email" value={userInfo.email} Icon={Mail} />
-//               <Info label="Phone" value={userInfo.phone} Icon={Phone} />
-//               <Info
-//                 label="Position"
-//                 value={userInfo.positions?.join(", ")}
-//                 Icon={FileText}
-//               />
-//             </div>
-//           </div>
-//         </div>
-
-//         {/* Summary */}
-//         <div className="bg-gradient-to-r from-green-100 to-emerald-50 shadow-2xl p-6 border border-gray-200 rounded-xl mt-6 flex items-center justify-between">
-//           <div className="flex items-center gap-4">
-//             <div className="bg-green-500 p-3 rounded-xl shadow-md">
-//               <CheckCircle className="w-7 h-7 text-white" />
-//             </div>
-//             <div>
-//               <p className="text-sm text-gray-600 font-medium uppercase">
-//                 Total Amount Paid
-//               </p>
-//               <p className="text-3xl font-bold text-green-700">
-//                 ₹{totalPaid.toLocaleString("en-IN")}
-//               </p>
-//             </div>
-//           </div>
-//           <div className="text-right">
-//             <p className="text-sm text-gray-600 font-medium">Total Receipts</p>
-//             <p className="text-2xl font-bold text-gray-800">{fees.length}</p>
-//           </div>
-//         </div>
-
-//         {/* Payment History */}
-//         <div className="bg-white rounded-b-xl shadow-2xl p-6 border border-gray-200 mt-6">
-//           <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-//             <FileText className="w-5 h-5 text-blue-600" />
-//             Payment History
-//           </h2>
-
-//           {fees.length === 0 ? (
-//             <div className="text-center py-12">
-//               <FileText className="w-10 h-10 text-gray-400 mx-auto mb-4" />
-//               <h3 className="text-xl font-semibold text-gray-700 mb-2">
-//                 No Receipts Available
-//               </h3>
-//               <p className="text-gray-500">
-//                 Your payment receipts will appear here once payments are made.
-//               </p>
-//             </div>
-//           ) : (
-//             <div className="space-y-4">
-//               {fees.map((f, i) => (
-//                 <ReceiptCard
-//                   key={i}
-//                   data={f}
-//                   index={i}
-//                   onDownload={handleDownload}
-//                 />
-//               ))}
-//             </div>
-//           )}
-//         </div>
-
-//         <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-xl p-6 text-center text-gray-700 shadow-inner">
-//           <p className="text-sm font-medium">
-//             <strong>Note:</strong> This is an official computer-generated
-//             receipt. Please keep this for your records. For any queries, contact
-//             the accounts department.
-//           </p>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-
-// // ✅ Small helper subcomponents
-// const Info = ({ label, value, Icon }) => (
-//   <div className="flex items-center gap-3">
-//     <Icon className="w-5 h-5 text-gray-400" />
-//     <div>
-//       <p className="text-xs text-gray-500 uppercase font-medium">{label}</p>
-//       <p className="text-base font-semibold text-gray-800">{value || "—"}</p>
-//     </div>
-//   </div>
-// );
-
-// const ReceiptCard = ({ data, index, onDownload }) => (
-//   <div className="border-2 border-gray-200 rounded-xl hover:border-blue-300 transition-all duration-300 overflow-hidden">
-//     <div className="bg-gradient-to-r from-gray-50 to-blue-50 px-6 py-4 flex items-center justify-between">
-//       <div className="flex items-center gap-3">
-//         <div className="bg-blue-100 p-2 rounded-lg">
-//           <Receipt className="w-5 h-5 text-blue-600" />
-//         </div>
-//         <div>
-//           <p className="text-sm font-semibold text-gray-700">Receipt No.</p>
-//           <p className="text-lg font-bold text-blue-600">
-//             RCP-{new Date(data.createdAt).getFullYear()}-
-//             {String(index + 1).padStart(3, "0")}
-//           </p>
-//         </div>
-//       </div>
-//       <button
-//         onClick={() => onDownload(data, index)}
-//         className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
-//       >
-//         <Download className="w-4 h-4" />
-//         Download
-//       </button>
-//     </div>
-
-//     <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-//       <DetailBox
-//         label="Amount Paid"
-//         value={`₹${data.amount?.toLocaleString("en-IN")}`}
-//         Icon={IndianRupee}
-//         color="green"
-//       />
-//       <DetailBox
-//         label="Installment"
-//         value={data.installment}
-//         Icon={FileText}
-//         color="blue"
-//       />
-//       <DetailBox
-//         label="Payment Date"
-//         value={new Date(data.createdAt).toLocaleDateString("en-IN")}
-//         Icon={Calendar}
-//         color="purple"
-//       />
-//     </div>
-//   </div>
-// );
-
-// const DetailBox = ({ label, value, Icon, color }) => {
-//   const colors = {
-//     green: "bg-green-50 border-green-200 text-green-700",
-//     blue: "bg-blue-50 border-blue-200 text-blue-700",
-//     purple: "bg-purple-50 border-purple-200 text-purple-700",
-//   };
-//   return (
-//     <div
-//       className={`p-4 rounded-lg border ${colors[color]} flex flex-col items-start justify-center`}
-//     >
-//       <div className="flex items-center gap-2 mb-1">
-//         <Icon className={`w-5 h-5 text-${color}-600`} />
-//         <p className="text-xs text-gray-600 font-bold uppercase">{label}</p>
-//       </div>
-//       <p className="text-lg font-bold">{value || "—"}</p>
-//     </div>
-//   );
-// };
