@@ -15,6 +15,7 @@ import Event from "../Event/Event";
 import Courses from "../Courses/Courses";
 import Certificate from "../Certificate/Certificate";
 import Id from "../Id/Id";
+import Result from "../Result/Result";
 
 export default function Home() {
   const [currentView, setCurrentView] = useState("dashboard");
@@ -39,6 +40,8 @@ export default function Home() {
         return <Courses />;
       case "documents":
         return <Documents />;
+      case "result":
+        return <Result />;
       case "certificate":
         return <Certificate />;
       case "id":
