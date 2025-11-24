@@ -57,7 +57,7 @@ export default function FeesReceipts() {
             studentName: user.name || "N/A",
             email: user.email || "N/A",
             phone: user.phone || "N/A",
-            course: user.course || "N/A",
+            course: user.Department || "N/A",
           };
         });
 
@@ -455,7 +455,7 @@ export default function FeesReceipts() {
                     <FileText className="w-4 h-4" /> Course
                   </p>
                   <p className="font-semibold text-gray-800">
-                    {selectedFee.course}
+                    {selectedFee.Department}
                   </p>
                 </div>
 

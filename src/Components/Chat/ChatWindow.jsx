@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
@@ -14,13 +15,31 @@ export default function ChatWindow({
   onBackClick,
   isMobile,
 }) {
-  // Use real user ID if available, else a temporary placeholder
-  const CURRENT_USER_ID = currentUser?.id || "TEMP_USER_ID";
+  // ------------------------------
+  // ✅ GET USER FROM LOCAL STORAGE
+  // ------------------------------
+  const [localUser, setLocalUser] = useState(null);
+
+  useEffect(() => {
+    try {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        setLocalUser(JSON.parse(storedUser));
+      }
+    } catch (err) {
+      console.error("Error reading localStorage user:", err);
+    }
+  }, []);
+
+  // Final current user ID
+  const CURRENT_USER_ID = localUser?.id || currentUser?.id || "TEMP_USER_ID";
 
   const [messages, setMessages] = useState([]);
   const socketRef = useRef(null);
 
-  // Initialize socket
+  // ------------------------------
+  // ✅ SOCKET INITIALIZATION
+  // ------------------------------
   useEffect(() => {
     if (!CURRENT_USER_ID || CURRENT_USER_ID === "TEMP_USER_ID") return;
 
@@ -30,6 +49,7 @@ export default function ChatWindow({
 
     socketRef.current.emit("user:join", CURRENT_USER_ID);
 
+    // Receive Message
     socketRef.current.on("message:receive", ({ message }) => {
       setMessages((prev) => [
         ...prev,
@@ -42,11 +62,12 @@ export default function ChatWindow({
       ]);
     });
 
+    // Sent Message confirmation
     socketRef.current.on("message:sent", ({ message }) => {
       setMessages((prev) => [
         ...prev.filter((m) => !m._tmpId),
         {
-          sender: message.sender.name || "You",
+          sender: "You",
           text: message.text,
           time: "Now",
           raw: message,
@@ -55,20 +76,21 @@ export default function ChatWindow({
     });
 
     socketRef.current.on("message:error", (err) => {
-      console.error(
-        "Socket message error:",
-        err?.error || err || "Unknown error"
-      );
+      console.error("Socket message error:", err?.error || err);
     });
 
     return () => {
-      socketRef.current.off("message:receive");
-      socketRef.current.off("message:sent");
-      socketRef.current.off("message:error");
+      if (socketRef.current) {
+        socketRef.current.off("message:receive");
+        socketRef.current.off("message:sent");
+        socketRef.current.off("message:error");
+      }
     };
   }, [CURRENT_USER_ID]);
 
-  // Fetch chat history
+  // ------------------------------
+  // ✅ FETCH CHAT HISTORY
+  // ------------------------------
   useEffect(() => {
     if (!user || CURRENT_USER_ID === "TEMP_USER_ID") return;
 
@@ -94,17 +116,16 @@ export default function ChatWindow({
           setMessages([]);
         }
       } catch (err) {
-        console.error(
-          "Error fetching messages:",
-          err.response?.data?.error || err.message
-        );
+        console.error("Error fetching messages:", err);
       }
     };
 
     fetchHistory();
   }, [user, CURRENT_USER_ID]);
 
-  // Send message
+  // ------------------------------
+  // ✅ SEND MESSAGE
+  // ------------------------------
   const handleSendMessage = (payload) => {
     if (!user || CURRENT_USER_ID === "TEMP_USER_ID")
       return alert("Select a user to send message");
@@ -112,6 +133,7 @@ export default function ChatWindow({
     const text = typeof payload === "string" ? payload : payload.text || "";
     const fileUrl = payload.image || payload.fileUrl;
 
+    // Temporary message for UI
     const tmpMsg = {
       _tmpId: Date.now(),
       sender: "You",
@@ -135,12 +157,14 @@ export default function ChatWindow({
     }
   };
 
-  // Render placeholder if no conversation selected
+  // ------------------------------
+  // UI WHEN NO USER SELECTED
+  // ------------------------------
   if (!user)
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
         <div className="text-center space-y-3">
-          <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto" />
+          <div className="w-20 h-20 bg-blue-100 rounded-full mx-auto"></div>
           <h2 className="text-xl font-semibold text-slate-700">
             Select a conversation
           </h2>
@@ -151,6 +175,9 @@ export default function ChatWindow({
       </div>
     );
 
+  // ------------------------------
+  // MAIN CHAT WINDOW UI
+  // ------------------------------
   return (
     <div className="flex-1 flex flex-col bg-gradient-to-br from-slate-50 to-slate-100 h-screen">
       <Header
@@ -159,7 +186,9 @@ export default function ChatWindow({
         onBackClick={onBackClick}
         isMobile={isMobile}
       />
+
       <ChatMessages messages={messages} currentUser="You" />
+
       <ChatFooter onSend={handleSendMessage} />
     </div>
   );
