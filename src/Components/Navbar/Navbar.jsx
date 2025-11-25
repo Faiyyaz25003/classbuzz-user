@@ -1,5 +1,3 @@
-
-
 "use client";
 import { useState, useEffect } from "react";
 import axios from "axios";
@@ -218,7 +216,7 @@ export default function Navbar() {
                       <span className="font-medium">My Profile</span>
                     </Link>
                     <Link
-                      href="/messages"
+                      href="/chatMain"
                       className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-cyan-50 transition-colors text-gray-700 hover:text-[#1e88a8]"
                     >
                       <Mail size={18} />
