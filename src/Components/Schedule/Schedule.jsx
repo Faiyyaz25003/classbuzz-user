@@ -5,6 +5,10 @@ import axios from "axios";
 
 export default function Schedule() {
   const [timetables, setTimetables] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
+  const [courses, setCourses] = useState([]);
+
+  const [selectedCourse, setSelectedCourse] = useState("");
 
   const subjectColors = [
     "bg-gradient-to-br from-blue-500 to-blue-600",
@@ -17,25 +21,42 @@ export default function Schedule() {
     "bg-gradient-to-br from-emerald-500 to-emerald-600",
   ];
 
-  // Fetch all schedules
+  // Fetch Schedules
   useEffect(() => {
     const fetchSchedules = async () => {
       try {
         const res = await axios.get("http://localhost:5000/api/schedule");
-        // Attach course info for display
+
         const formatted = res.data.map((t) => ({
           courseName: t.courseId.name,
           semester: t.semester,
           timetable: t.timetable,
           subjects: t.subjects,
         }));
+
         setTimetables(formatted);
+        setFilteredData(formatted);
+
+        const courseNames = [...new Set(formatted.map((t) => t.courseName))];
+        setCourses(courseNames);
       } catch (error) {
         console.log(error);
       }
     };
+
     fetchSchedules();
   }, []);
+
+  // Filter logic (only by course)
+  useEffect(() => {
+    let filtered = timetables;
+
+    if (selectedCourse) {
+      filtered = filtered.filter((t) => t.courseName === selectedCourse);
+    }
+
+    setFilteredData(filtered);
+  }, [selectedCourse, timetables]);
 
   const getSubjectColor = (subjectName, timetableSubjects) => {
     if (subjectName === "--") return "bg-gray-100 text-gray-400";
@@ -51,14 +72,40 @@ export default function Schedule() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4">
-      <div className="max-w-5xl mx-auto">
+    <div className="ml-[300px] mt-[50px] min-h-screen bg-gray-50 py-10 px-4">
+      <div className="max-w-6xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-800 text-center mb-8">
           All Timetables
         </h1>
 
-        {timetables.length > 0 ? (
-          timetables.map((t, idx) => (
+        {/* Filters */}
+        <div className="flex gap-4 mb-6 justify-center">
+          <select
+            className="px-4 py-2 border rounded-lg shadow-sm bg-white"
+            value={selectedCourse}
+            onChange={(e) => setSelectedCourse(e.target.value)}
+          >
+            <option value="">Select Course</option>
+            {courses.map((c, idx) => (
+              <option key={idx} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+
+          {selectedCourse && (
+            <button
+              onClick={() => setSelectedCourse("")}
+              className="px-4 py-2 bg-red-500 text-white rounded-lg shadow hover:bg-red-600"
+            >
+              Reset
+            </button>
+          )}
+        </div>
+
+        {/* Timetable Display */}
+        {filteredData.length > 0 ? (
+          filteredData.map((t, idx) => (
             <div
               key={idx}
               className="bg-white rounded-xl shadow-md overflow-x-auto mb-6"
@@ -66,6 +113,7 @@ export default function Schedule() {
               <h2 className="text-xl font-bold text-gray-800 p-4 border-b">
                 {t.courseName} - Semester {t.semester}
               </h2>
+
               <table className="w-full text-center border-collapse">
                 <thead>
                   <tr className="bg-gray-100">
@@ -77,12 +125,14 @@ export default function Schedule() {
                     ))}
                   </tr>
                 </thead>
+
                 <tbody>
-                  {t.timetable.map((row, idxRow) => (
-                    <tr key={idxRow} className="border-b hover:bg-gray-50">
+                  {t.timetable.map((row, rowIdx) => (
+                    <tr key={rowIdx} className="border-b hover:bg-gray-50">
                       <td className="px-4 py-2 font-semibold text-gray-700 bg-gray-50">
                         {row.day}
                       </td>
+
                       {generateSlots(t.timetable).map((slot) => (
                         <td key={slot} className="px-2 py-2">
                           <div
@@ -103,7 +153,7 @@ export default function Schedule() {
           ))
         ) : (
           <div className="text-center text-gray-500 mt-10">
-            Loading timetables...
+            No timetables found...
           </div>
         )}
       </div>
