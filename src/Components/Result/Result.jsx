@@ -79,7 +79,7 @@ export default function Result() {
               <strong>Name:</strong> {loggedUser.name}
             </p>
             <p className="text-gray-700 font-medium">
-              <strong>Roll No:</strong> {userResult.rollNo}
+              <strong>Roll No:</strong> {students.rollNo}
             </p>
           </div>
         )}
