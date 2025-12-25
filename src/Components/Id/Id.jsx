@@ -1,8 +1,10 @@
+
 "use client";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import axios from "axios";
 import Image from "next/image";
+import { QRCodeCanvas } from "qrcode.react";
 
 export default function Id() {
   const [user, setUser] = useState(null);
@@ -18,9 +20,7 @@ export default function Id() {
       }
 
       const res = await axios.get("http://localhost:5000/api/users/me", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       setUser(res.data);
@@ -36,26 +36,20 @@ export default function Id() {
     fetchUser();
   }, []);
 
-  if (loading) {
-    return <p className="text-center mt-10">Loading...</p>;
-  }
-
-  if (!user) {
-    return <p className="text-center mt-10">No user logged in</p>;
-  }
+  if (loading) return <p className="text-center mt-10">Loading...</p>;
+  if (!user) return <p className="text-center mt-10">No user logged in</p>;
 
   return (
     <div className="ml-[300px] mt-[80px] flex justify-center min-h-screen bg-gray-100 p-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        style={{ width: "350px", height: "500px" }} // Fixed width and height
+        style={{ width: "350px", height: "500px" }}
         className="bg-white rounded-xl shadow-xl overflow-hidden border-4 border-blue-500 flex flex-col justify-between"
       >
-        {/* Top Header Blue */}
+        {/* Header */}
         <div className="bg-blue-900 text-white p-4 font-semibold text-sm flex items-center justify-between">
           <p className="text-lg">ClassBuzz</p>
-
           <Image
             src="/logo.jpeg"
             alt="Logo"
@@ -66,23 +60,34 @@ export default function Id() {
         </div>
 
         {/* Body */}
-        <div className="p-5 text-center flex-1">
-          {/* Photo */}
-          <div className="w-24 h-28 bg-gray-200 mx-auto rounded-md border shadow-md overflow-hidden">
-            {user.photo ? (
-              <img
-                src={user.photo}
-                alt="photo"
-                className="w-full h-full object-cover"
+        <div className="p-5 flex-1">
+          <div className="flex justify-between items-start gap-4">
+            {/* Photo */}
+            <div className="w-32 h-36 bg-gray-200 rounded-md border shadow-md overflow-hidden">
+              {user.photo ? (
+                <img
+                  src={user.photo}
+                  alt="photo"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  Photo
+                </div>
+              )}
+            </div>
+
+            {/* QR Code */}
+            <div className="w-32 h-36 flex items-center justify-center bg-white border rounded-md shadow-md overflow-hidden">
+              <QRCodeCanvas
+                value={`http://localhost:5000/api/users/download-pdf/${user._id}`}
+                size={144} // Same as photo height
+                includeMargin={true}
               />
-            ) : (
-              <div className="flex items-center justify-center h-full text-gray-500">
-                Photo
-              </div>
-            )}
+            </div>
           </div>
 
-          <h2 className="mt-4 font-bold text-lg text-blue-900">
+          <h2 className="mt-4 font-bold text-lg text-blue-900 text-center">
             {user.name?.toUpperCase()}
           </h2>
 
@@ -104,12 +109,6 @@ export default function Id() {
             <p>
               <strong>Gender :</strong> {user.gender || "—"}
             </p>
-            {/* <p>
-              <strong>Join Date :</strong>{" "}
-              {user.joinDate
-                ? new Date(user.joinDate).toLocaleDateString()
-                : "—"}
-            </p> */}
           </div>
         </div>
 
