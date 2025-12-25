@@ -16,6 +16,7 @@ import Courses from "../Courses/Courses";
 import Certificate from "../Certificate/Certificate";
 import Id from "../Id/Id";
 import Result from "../Result/Result";
+import RecordedLectures from "../RecordedLecture/RecordedLecture";
 
 export default function Home() {
   const [currentView, setCurrentView] = useState("dashboard");
@@ -46,6 +47,8 @@ export default function Home() {
         return <Certificate />;
       case "id":
         return <Id />;
+      case "record":
+        return <RecordedLectures />;
       default:
         return <Dashboard />;
     }
