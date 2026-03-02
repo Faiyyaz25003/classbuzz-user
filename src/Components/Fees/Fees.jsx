@@ -3,511 +3,347 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import {
-  FileText,
-  IndianRupee,
-  Calendar,
-  User,
-  Hash,
-  Download,
-  Loader2,
-  Mail,
-  Phone,
-  Search,
-  Filter,
-  TrendingUp,
-  CreditCard,
-  CheckCircle2,
-  Eye,
-  X,
-} from "lucide-react";
 
-export default function FeesReceipts() {
+const StatCard = ({ icon, label, value, color }) => (
+  <div
+    className={`bg-white rounded-2xl shadow-md p-6 flex items-center gap-4 border-l-4 ${color}`}
+  >
+    <div className="text-3xl">{icon}</div>
+    <div>
+      <p className="text-sm text-gray-500 font-medium">{label}</p>
+      <h2 className="text-2xl font-bold text-gray-800">{value}</h2>
+    </div>
+  </div>
+);
+
+export default function MyFees() {
   const [fees, setFees] = useState([]);
-  const [users, setUsers] = useState([]);
+  const [user, setUser] = useState(null);
+  const [selectedInstallment, setSelectedInstallment] = useState("All");
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterMode, setFilterMode] = useState("all");
-  const [selectedFee, setSelectedFee] = useState(null);
-  const [showModal, setShowModal] = useState(false);
+  const [error, setError] = useState("");
 
-  // 🧭 Fetch Fees and Users Data
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchMyFees = async () => {
       try {
-        const [feesRes, usersRes] = await Promise.all([
-          axios.get("http://localhost:5000/api/fees"),
-          axios.get("http://localhost:5000/api/users"),
-        ]);
+        const storedUser = localStorage.getItem("user");
+        if (!storedUser) {
+          setError("You are not logged in. Please login first.");
+          setLoading(false);
+          return;
+        }
 
-        const usersData = usersRes.data;
-        const feesData = feesRes.data;
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
 
-        // Create a map of users by ID for quick lookup
-        const usersMap = {};
-        usersData.forEach((user) => {
-          usersMap[user._id] = user;
-        });
+        // ✅ _id ya id dono try karo
+        const userId = parsedUser._id || parsedUser.id;
 
-        // Merge user data with fees data
-        const mergedFees = feesData.map((fee) => {
-          const user = usersMap[fee.userId] || {};
-          return {
-            ...fee,
-            studentName: user.name || "N/A",
-            email: user.email || "N/A",
-            phone: user.phone || "N/A",
-            course: user.Department || "N/A",
-          };
-        });
+        if (!userId) {
+          setError("User ID not found. Please logout and login again.");
+          setLoading(false);
+          return;
+        }
 
-        setFees(mergedFees);
-        setUsers(usersData);
-        setLoading(false);
+        const res = await axios.get(
+          `http://localhost:5000/api/fees/user/${userId}`,
+        );
+        setFees(res.data);
       } catch (err) {
-        console.error("Error fetching data:", err);
+        console.error(err);
+        setError("Failed to load your fee records.");
+      } finally {
         setLoading(false);
       }
     };
-    fetchData();
+
+    fetchMyFees();
   }, []);
 
-  // Calculate statistics
-  const stats = {
-    total: fees.length,
-    totalAmount: fees.reduce((sum, fee) => sum + fee.amount, 0),
-    avgAmount:
-      fees.length > 0
-        ? (
-            fees.reduce((sum, fee) => sum + fee.amount, 0) / fees.length
-          ).toFixed(2)
-        : 0,
-  };
-
-  // Filter and search
-  const filteredFees = fees.filter((fee) => {
-    const matchesSearch =
-      (fee.studentName?.toLowerCase() || "").includes(
-        searchTerm.toLowerCase()
-      ) ||
-      (fee.email?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-      (fee.course?.toLowerCase() || "").includes(searchTerm.toLowerCase());
-    const matchesFilter =
-      filterMode === "all" || fee.paymentMode === filterMode;
-    return matchesSearch && matchesFilter;
-  });
-
-  // 🧾 Generate PDF Receipt
-  const generatePDF = (fee) => {
+  const downloadReceipt = (fee) => {
     const doc = new jsPDF();
 
-    // Header with gradient effect
     doc.setFillColor(37, 99, 235);
     doc.rect(0, 0, 210, 40, "F");
 
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(24);
-    doc.text("FEES RECEIPT", 105, 20, { align: "center" });
+    doc.setFontSize(22);
+    doc.setFont("helvetica", "bold");
+    doc.text("ABC SCHOOL", 105, 18, { align: "center" });
     doc.setFontSize(12);
-    doc.text("🎓 College Management System", 105, 30, { align: "center" });
+    doc.setFont("helvetica", "normal");
+    doc.text("Fee Payment Receipt", 105, 30, { align: "center" });
 
-    // Reset text color
-    doc.setTextColor(0, 0, 0);
+    doc.setTextColor(40, 40, 40);
+    doc.setFontSize(11);
 
-    // Receipt details
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.text(`Receipt ID: ${fee._id}`, 14, 50);
-    doc.text(`Date: ${new Date(fee.date).toLocaleDateString()}`, 150, 50);
-
-    // Student Info Box
+    const infoY = 55;
+    doc.setFont("helvetica", "bold");
+    doc.text("Receipt Details", 20, infoY);
     doc.setDrawColor(37, 99, 235);
-    doc.setLineWidth(0.5);
-    doc.rect(14, 60, 182, 50);
+    doc.line(20, infoY + 2, 100, infoY + 2);
 
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    doc.text("Student Information", 20, 70);
+    doc.setFont("helvetica", "normal");
+    const fields = [
+      ["Receipt ID:", fee._id],
+      ["Date:", new Date(fee.feeDate).toLocaleDateString()],
+      ["Student Name:", user?.name || ""],
+      ["Installment:", `Installment ${fee.installment}`],
+      ["Payment Method:", fee.paymentMethod],
+    ];
+    if (fee.paymentName) fields.push(["Transaction ID:", fee.paymentName]);
 
-    doc.setFontSize(10);
-    doc.setTextColor(60, 60, 60);
-    doc.text(`Name: ${fee.studentName}`, 20, 80);
-    doc.text(`Email: ${fee.email}`, 20, 88);
-    doc.text(`Phone: ${fee.phone}`, 20, 96);
-    doc.text(`Course: ${fee.course}`, 20, 104);
+    fields.forEach(([label, value], i) => {
+      doc.text(label, 20, infoY + 12 + i * 8);
+      doc.text(String(value), 70, infoY + 12 + i * 8);
+    });
 
-    // Payment Details Box
-    doc.rect(14, 120, 182, 40);
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    doc.text("Payment Details", 20, 130);
+    autoTable(doc, {
+      startY: infoY + 12 + fields.length * 8 + 6,
+      head: [["Description", "Amount"]],
+      body: [["Tuition Fee", `Rs.${fee.amount}`]],
+      headStyles: { fillColor: [37, 99, 235] },
+    });
 
-    doc.setFontSize(10);
-    doc.setTextColor(60, 60, 60);
-    doc.text(`Payment Mode: ${fee.paymentMode}`, 20, 140);
-    doc.text(`Amount Paid: ₹${fee.amount}`, 20, 148);
+    const finalY = doc.lastAutoTable.finalY;
+    doc.setFillColor(240, 245, 255);
+    doc.rect(14, finalY + 8, 182, 14, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.setTextColor(37, 99, 235);
+    doc.text(`Total Paid: Rs.${fee.amount}`, 20, finalY + 18);
 
-    // Total Amount (highlighted)
-    doc.setFillColor(240, 253, 244);
-    doc.rect(14, 170, 182, 20, "F");
-    doc.setFontSize(14);
-    doc.setTextColor(22, 163, 74);
-    doc.text(`Total Amount: ₹${fee.amount}`, 105, 182, { align: "center" });
+    doc.setTextColor(40, 40, 40);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.text("Authorized Signature", 140, finalY + 40);
+    doc.line(135, finalY + 42, 195, finalY + 42);
 
-    // Footer
     doc.setFontSize(9);
-    doc.setTextColor(100, 100, 100);
-    doc.text(
-      "✅ This is a computer-generated receipt. Thank you for your payment!",
-      105,
-      200,
-      { align: "center" }
-    );
-    doc.text(
-      "For queries, contact: admin@college.edu | +91-9876543210",
-      105,
-      206,
-      { align: "center" }
-    );
+    doc.setTextColor(150);
+    doc.text("Thank you for your payment!", 105, 285, { align: "center" });
 
-    doc.save(`Receipt_${fee.studentName}_${fee._id}.pdf`);
+    doc.save(`Receipt_${user?.name}_Installment${fee.installment}.pdf`);
   };
 
-  // View Details Modal
-  const viewDetails = (fee) => {
-    setSelectedFee(fee);
-    setShowModal(true);
-  };
+  const filteredFees =
+    selectedInstallment === "All"
+      ? fees
+      : fees.filter((f) => f.installment === Number(selectedInstallment));
 
-  return (
-    <div className="min-h-screen ml-[300px] mt-[50px] bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
-      {/* Header Section */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-3 rounded-xl shadow-lg">
-            <FileText className="text-white w-8 h-8" />
-          </div>
-          <div>
-            <h1 className="text-4xl font-bold text-gray-800">Fees Receipts</h1>
-            <p className="text-gray-600">
-              Manage and download payment receipts
-            </p>
-          </div>
-        </div>
-      </div>
+  const totalPaid = fees.reduce((acc, f) => acc + Number(f.amount), 0);
+  const installmentCount = (n) =>
+    fees.filter((f) => f.installment === n).length;
+  const installmentsPaid = [1, 2, 3].filter((n) =>
+    fees.some((f) => f.installment === n),
+  ).length;
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-blue-500 hover:shadow-xl transition-shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500 text-sm font-medium">
-                Total Receipts
-              </p>
-              <p className="text-3xl font-bold text-gray-800 mt-2">
-                {stats.total}
-              </p>
-            </div>
-            <div className="bg-blue-100 p-4 rounded-xl">
-              <FileText className="w-8 h-8 text-blue-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-green-500 hover:shadow-xl transition-shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500 text-sm font-medium">Total Amount</p>
-              <p className="text-3xl font-bold text-gray-800 mt-2 flex items-center gap-1">
-                <IndianRupee className="w-6 h-6" />
-                {stats.totalAmount.toLocaleString()}
-              </p>
-            </div>
-            <div className="bg-green-100 p-4 rounded-xl">
-              <TrendingUp className="w-8 h-8 text-green-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-purple-500 hover:shadow-xl transition-shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500 text-sm font-medium">
-                Average Amount
-              </p>
-              <p className="text-3xl font-bold text-gray-800 mt-2 flex items-center gap-1">
-                <IndianRupee className="w-6 h-6" />
-                {stats.avgAmount.toLocaleString()}
-              </p>
-            </div>
-            <div className="bg-purple-100 p-4 rounded-xl">
-              <CreditCard className="w-8 h-8 text-purple-600" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Search and Filter Bar */}
-      <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Search by name, email, or course..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <Filter className="text-gray-500 w-5 h-5" />
-            <select
-              value={filterMode}
-              onChange={(e) => setFilterMode(e.target.value)}
-              className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition bg-white"
-            >
-              <option value="all">All Payments</option>
-              <option value="Cash">Cash</option>
-              <option value="Online">Online</option>
-              <option value="Cheque">Cheque</option>
-              <option value="Card">Card</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Table Section */}
-      {loading ? (
-        <div className="flex justify-center items-center h-64 bg-white rounded-2xl shadow-lg">
-          <div className="text-center">
-            <Loader2 className="animate-spin text-blue-600 w-12 h-12 mx-auto mb-4" />
-            <p className="text-gray-600">Loading receipts...</p>
-          </div>
-        </div>
-      ) : filteredFees.length === 0 ? (
-        <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
-          <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <p className="text-xl text-gray-500">No fee records found</p>
-          <p className="text-gray-400 mt-2">
-            Try adjusting your search or filter
+  // ---- Loading ----
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-5xl mb-4 animate-bounce">📚</div>
+          <p className="text-gray-500 text-lg font-medium">
+            Loading your fee records...
           </p>
         </div>
-      ) : (
-        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full">
-              <thead>
-                <tr className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-                  <th className="py-4 px-6 text-left font-semibold">#</th>
-                  <th className="py-4 px-6 text-left font-semibold">
-                    Student Details
-                  </th>
-                  <th className="py-4 px-6 text-left font-semibold">Course</th>
-                  <th className="py-4 px-6 text-left font-semibold">Amount</th>
-                  <th className="py-4 px-6 text-left font-semibold">Payment</th>
-                  <th className="py-4 px-6 text-left font-semibold">Date</th>
-                  <th className="py-4 px-6 text-center font-semibold">
-                    Actions
-                  </th>
+      </div>
+    );
+  }
+
+  // ---- Error ----
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-white flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-lg p-10 text-center max-w-md">
+          <div className="text-5xl mb-4">🔒</div>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">
+            Access Denied
+          </h2>
+          <p className="text-gray-500 text-sm">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen mt-[70px] ml-[300px] bg-gradient-to-br from-blue-50 via-indigo-50 to-white p-8 font-sans">
+      {/* Header */}
+      <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="text-4xl font-extrabold text-gray-800 tracking-tight">
+            🎓 My Fee Records
+          </h1>
+          <p className="text-gray-500 mt-1 text-sm">
+            Welcome,{" "}
+            <span className="font-semibold text-blue-600">{user?.name}</span> —
+            your complete fee history
+          </p>
+        </div>
+        <div className="bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-semibold shadow">
+          ABC School
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
+        <StatCard
+          icon="📋"
+          label="Total Transactions"
+          value={fees.length}
+          color="border-blue-500"
+        />
+        <StatCard
+          icon="✅"
+          label="Installments Paid"
+          value={`${installmentsPaid} / 3`}
+          color="border-green-500"
+        />
+        <StatCard
+          icon="💰"
+          label="Total Amount Paid"
+          value={`Rs.${totalPaid.toLocaleString()}`}
+          color="border-indigo-500"
+        />
+      </div>
+
+      {/* Installment Status */}
+      <div className="bg-white rounded-2xl shadow-md p-6 mb-8 border border-gray-100">
+        <h3 className="text-base font-bold text-gray-700 mb-4">
+          📊 Installment Status
+        </h3>
+        <div className="flex flex-wrap gap-4">
+          {[1, 2, 3].map((num) => {
+            const paid = fees.some((f) => f.installment === num);
+            return (
+              <div
+                key={num}
+                className={`flex-1 min-w-[120px] rounded-xl p-4 text-center border-2 ${
+                  paid
+                    ? "bg-green-50 border-green-400 text-green-700"
+                    : "bg-gray-50 border-gray-200 text-gray-400"
+                }`}
+              >
+                <div className="text-2xl mb-1">{paid ? "✅" : "⏳"}</div>
+                <p className="font-semibold text-sm">Installment {num}</p>
+                <p className="text-xs mt-1">{paid ? "Paid" : "Pending"}</p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Filter Tabs */}
+      <div className="flex flex-wrap items-center gap-3 mb-6">
+        {["All", 1, 2, 3].map((item) => (
+          <button
+            key={item}
+            onClick={() => setSelectedInstallment(item)}
+            className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 shadow-sm ${
+              selectedInstallment === item
+                ? "bg-blue-600 text-white shadow-blue-200 shadow-md scale-105"
+                : "bg-white text-gray-600 hover:bg-blue-50 border border-gray-200"
+            }`}
+          >
+            {item === "All"
+              ? "🗂 All Records"
+              : `📋 Installment ${item} (${installmentCount(item)})`}
+          </button>
+        ))}
+      </div>
+
+      {/* Table */}
+      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-gray-700">
+            🧾 Payment History
+          </h2>
+          <span className="text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-medium">
+            {filteredFees.length} records
+          </span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
+              <tr>
+                <th className="px-6 py-3">Installment</th>
+                <th className="px-6 py-3">Amount</th>
+                <th className="px-6 py-3">Method</th>
+                <th className="px-6 py-3">Transaction ID</th>
+                <th className="px-6 py-3">Date</th>
+                <th className="px-6 py-3">Receipt</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {filteredFees.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-12 text-gray-400">
+                    <div className="text-4xl mb-2">📭</div>
+                    No records found.
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {filteredFees.map((fee, index) => (
+              ) : (
+                filteredFees.map((fee) => (
                   <tr
                     key={fee._id}
-                    className="hover:bg-blue-50 transition-colors"
+                    className="hover:bg-blue-50 transition-colors duration-150"
                   >
-                    <td className="py-4 px-6">
-                      <span className="bg-blue-100 text-blue-700 font-semibold px-3 py-1 rounded-full text-sm">
-                        {index + 1}
+                    <td className="px-6 py-4">
+                      <span className="bg-indigo-100 text-indigo-700 text-xs font-semibold px-3 py-1 rounded-full">
+                        Installment {fee.installment}
                       </span>
                     </td>
-                    <td className="py-4 px-6">
-                      <div className="flex items-start gap-3">
-                        <div className="bg-gradient-to-br from-blue-500 to-indigo-500 p-2 rounded-lg">
-                          <User className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-gray-800">
-                            {fee.studentName}
-                          </p>
-                          <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
-                            <Mail className="w-3 h-3" /> {fee.email}
-                          </p>
-                          <p className="text-sm text-gray-500 flex items-center gap-1">
-                            <Phone className="w-3 h-3" /> {fee.phone}
-                          </p>
-                        </div>
-                      </div>
+                    <td className="px-6 py-4 font-semibold text-green-600">
+                      Rs.{Number(fee.amount).toLocaleString()}
                     </td>
-                    <td className="py-4 px-6">
-                      <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-medium">
-                        {fee.course}
+                    <td className="px-6 py-4">
+                      <span
+                        className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                          fee.paymentMethod === "Cash"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : fee.paymentMethod === "UPI"
+                              ? "bg-blue-100 text-blue-700"
+                              : "bg-gray-100 text-gray-700"
+                        }`}
+                      >
+                        {fee.paymentMethod === "Cash"
+                          ? "💵"
+                          : fee.paymentMethod === "UPI"
+                            ? "📱"
+                            : "🏦"}{" "}
+                        {fee.paymentMethod}
                       </span>
                     </td>
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-1 text-green-600 font-bold text-lg">
-                        <IndianRupee className="w-5 h-5" />
-                        {fee.amount.toLocaleString()}
-                      </div>
+                    <td className="px-6 py-4 text-gray-500 text-sm">
+                      {fee.paymentName || "—"}
                     </td>
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-2">
-                        <CreditCard className="w-4 h-4 text-gray-500" />
-                        <span className="text-gray-700">{fee.paymentMode}</span>
-                      </div>
+                    <td className="px-6 py-4 text-gray-500 text-sm">
+                      {new Date(fee.feeDate).toLocaleDateString("en-IN", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      })}
                     </td>
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-2 text-gray-600">
-                        <Calendar className="w-4 h-4" />
-                        {new Date(fee.date).toLocaleDateString()}
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          onClick={() => viewDetails(fee)}
-                          className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-lg hover:shadow-lg transition-all flex items-center gap-2 font-medium"
-                        >
-                          <Eye className="w-4 h-4" /> View
-                        </button>
-                        <button
-                          onClick={() => generatePDF(fee)}
-                          className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg hover:shadow-lg transition-all flex items-center gap-2 font-medium"
-                        >
-                          <Download className="w-4 h-4" /> PDF
-                        </button>
-                      </div>
+                    <td className="px-6 py-4">
+                      <button
+                        onClick={() => downloadReceipt(fee)}
+                        className="flex items-center gap-1 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-all duration-150 shadow-sm"
+                      >
+                        📄 Download
+                      </button>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
 
-      {/* Details Modal - FIXED */}
-      {showModal && selectedFee && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 rounded-t-2xl">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 className="w-8 h-8 text-white" />
-                  <div>
-                    <h2 className="text-2xl font-bold text-white">
-                      Receipt Details
-                    </h2>
-                    <p className="text-blue-100 text-sm">
-                      Complete payment information
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="bg-white bg-opacity-20 hover:bg-opacity-30 p-2 rounded-lg transition"
-                >
-                  <X className="w-6 h-6 text-white" />
-                </button>
-              </div>
-            </div>
-
-            <div className="p-6 space-y-6">
-              <div className="bg-blue-50 rounded-xl p-4">
-                <p className="text-sm text-gray-600 mb-1">Receipt ID</p>
-                <p className="font-mono text-gray-800 font-semibold">
-                  {selectedFee._id}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-sm text-gray-600 mb-2 flex items-center gap-2">
-                    <User className="w-4 h-4" /> Student Name
-                  </p>
-                  <p className="font-semibold text-gray-800">
-                    {selectedFee.studentName}
-                  </p>
-                </div>
-
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-sm text-gray-600 mb-2 flex items-center gap-2">
-                    <Mail className="w-4 h-4" /> Email
-                  </p>
-                  <p className="font-semibold text-gray-800">
-                    {selectedFee.email}
-                  </p>
-                </div>
-
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-sm text-gray-600 mb-2 flex items-center gap-2">
-                    <Phone className="w-4 h-4" /> Phone
-                  </p>
-                  <p className="font-semibold text-gray-800">
-                    {selectedFee.phone}
-                  </p>
-                </div>
-
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-sm text-gray-600 mb-2 flex items-center gap-2">
-                    <FileText className="w-4 h-4" /> Course
-                  </p>
-                  <p className="font-semibold text-gray-800">
-                    {selectedFee.Department}
-                  </p>
-                </div>
-
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-sm text-gray-600 mb-2 flex items-center gap-2">
-                    <CreditCard className="w-4 h-4" /> Payment Mode
-                  </p>
-                  <p className="font-semibold text-gray-800">
-                    {selectedFee.paymentMode}
-                  </p>
-                </div>
-
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-sm text-gray-600 mb-2 flex items-center gap-2">
-                    <Calendar className="w-4 h-4" /> Date
-                  </p>
-                  <p className="font-semibold text-gray-800">
-                    {new Date(selectedFee.date).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border-2 border-green-200">
-                <p className="text-sm text-gray-600 mb-2">Amount Paid</p>
-                <p className="text-4xl font-bold text-green-600 flex items-center gap-2">
-                  <IndianRupee className="w-8 h-8" />
-                  {selectedFee.amount.toLocaleString()}
-                </p>
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={() => {
-                    generatePDF(selectedFee);
-                    setShowModal(false);
-                  }}
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2 font-semibold"
-                >
-                  <Download className="w-5 h-5" />
-                  Download PDF
-                </button>
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="px-6 bg-gray-200 text-gray-700 py-3 rounded-xl hover:bg-gray-300 transition-all font-semibold"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <p className="text-center text-gray-400 text-xs mt-8">
+        © {new Date().getFullYear()} ABC School Fee Management System
+      </p>
     </div>
   );
 }
