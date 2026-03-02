@@ -1,20 +1,40 @@
 
+"use client";
 import React from "react";
 import { Download } from "lucide-react";
 
 export default function ResultPDF({ student }) {
-  const getGrade = (percentage) => {
-    if (percentage >= 90) return "A+";
-    if (percentage >= 80) return "A";
-    if (percentage >= 70) return "B+";
-    if (percentage >= 60) return "B";
-    if (percentage >= 50) return "C";
-    if (percentage >= 40) return "D";
-    return "F";
+  if (!student) return null;
+
+  /* ================= SAFE SUBJECT ARRAY ================= */
+  const subjects = student.subjects || student.marks || [];
+
+  /* ================= SAFE PERCENTAGE ================= */
+  const calculatePercentage = () => {
+    if (!subjects.length) return 0;
+
+    const totalObtained = subjects.reduce(
+      (acc, sub) => acc + (sub.marks ?? sub.obtained ?? 0),
+      0,
+    );
+
+    const totalMax = subjects.reduce(
+      (acc, sub) => acc + (sub.maxMarks ?? 0),
+      0,
+    );
+
+    if (totalMax === 0) return 0;
+
+    return ((totalObtained / totalMax) * 100).toFixed(2);
   };
 
+  const percentage = student.percentage ?? calculatePercentage();
+
+  /* ================= GRADE LOGIC ================= */
   const calculateGrade = (marks, maxMarks) => {
+    if (!maxMarks) return "-";
     const percent = (marks / maxMarks) * 100;
+
     if (percent >= 90) return "A+";
     if (percent >= 80) return "A";
     if (percent >= 70) return "B+";
@@ -24,134 +44,51 @@ export default function ResultPDF({ student }) {
     return "F";
   };
 
+  /* ================= GENERATE PDF ================= */
   const generatePDF = () => {
     const htmlContent = `
       <html>
         <head>
           <style>
             @page { size: A4; margin: 20px; }
-            body { font-family: Arial, sans-serif; background: #f9fafb; }
-
+            body { font-family: Arial; background: #f9fafb; }
             .header {
-              background: linear-gradient(to right, #e0ecff, #f4f7ff);
+              text-align: center;
               border-bottom: 4px solid #8b0000;
               padding: 15px;
-              text-align: center;
             }
-
             .uni-title {
-              font-size: 28px;
+              font-size: 26px;
               font-weight: bold;
               color: #8b0000;
-              margin: 0;
-              font-family: serif;
             }
-
-            .grade-card {
-              font-size: 22px;
-              font-weight: bold;
-              color: #a51616;
-              font-family: serif;
-            }
-
-            .info-box {
-              border: 2px solid #cfcfcf;
-              background: #fff;
-              margin: 15px;
-              padding: 10px 15px;
-            }
-
-            .row {
-              display: flex;
-              border-bottom: 1px solid #ddd;
-              padding: 6px 0;
-            }
-
-            .label { width: 120px; font-weight: bold; }
-            .value { text-transform: uppercase; }
-
-            .photo-box {
-              width: 100px;
-              height: 130px;
-              border: 2px solid #888;
-              background: #efefef;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-size: 10px;
-              color: #666;
-            }
-
-            .photo-container {
-              position: absolute;
-              right: 25px;
-              top: 158px;
-            }
-
             table {
               width: 95%;
-              margin: 15px auto;
+              margin: 20px auto;
               border-collapse: collapse;
               font-size: 13px;
             }
-
             th, td {
               border: 1px solid #444;
               padding: 7px;
               text-align: center;
             }
-
             th { background: #e4e4e4; }
-            .total-row { background: #e4e4e4; font-weight: bold; }
-
-            .result-box {
-              border: 2px solid #cfcfcf;
-              margin: 15px;
-              padding: 10px 15px;
-              background: #fff;
-              font-size: 14px;
-            }
-
-            .signature {
-              text-align: right;
-              margin: 15px 25px;
-              margin-top: 40px;
-            }
-
-            .sign-label { font-family: cursive; font-size: 14px; }
-            .footer { font-size: 11px; color: gray; text-align: center; margin-top: 10px; }
+            .total-row { font-weight: bold; background:#e4e4e4; }
           </style>
         </head>
 
         <body>
 
           <div class="header">
-            <img src="logo.png" style="width:150px;height:90px;object-fit:contain;">
-            <div class="uni-title">University of Mumbai</div>
-            <div class="grade-card">GRADE CARD</div>
+            <div class="uni-title">University Result Card</div>
           </div>
 
-          <div class="info-box">
-            <div class="row">
-              <div class="label">Name</div><div class="value">${
-                student.name
-              }</div>
-            </div>
-            <div class="row">
-              <div class="label">Class</div><div>${student.class}</div>
-            </div>
-            <div class="row">
-              <div class="label">Semester</div><div>${
-                student.semester || "Not Specified"
-              }</div>
-            </div>
-            <div class="row" style="border:none;">
-              <div class="label">Roll No</div><div>${student.rollNo}</div>
-            </div>
-          </div>
-
-          <div class="photo-container">
-            <div class="photo-box">Photo</div>
+          <div style="padding:15px;">
+            <p><b>Name:</b> ${student.name || "-"}</p>
+            <p><b>Class:</b> ${student.class || "-"}</p>
+            <p><b>Semester:</b> ${student.semester || "-"}</p>
+            <p><b>Roll No:</b> ${student.rollNo || "-"}</p>
           </div>
 
           <table>
@@ -165,55 +102,61 @@ export default function ResultPDF({ student }) {
               </tr>
             </thead>
             <tbody>
-              ${student.subjects
-                .map((sub) => {
-                  const perc = ((sub.marks / sub.maxMarks) * 100).toFixed(2);
-                  return `
-                  <tr>
-                    <td>${sub.name}</td>
-                    <td>${sub.marks}</td>
-                    <td>${sub.maxMarks}</td>
-                    <td>${calculateGrade(sub.marks, sub.maxMarks)}</td>
-                    <td>${perc}%</td>
-                  </tr>
-                `;
-                })
-                .join("")}
+              ${
+                subjects.length
+                  ? subjects
+                      .map((sub) => {
+                        const obtained = sub.marks ?? sub.obtained ?? 0;
+                        const max = sub.maxMarks ?? 100;
+                        const perc =
+                          max > 0 ? ((obtained / max) * 100).toFixed(2) : 0;
+
+                        return `
+                          <tr>
+                            <td>${sub.name || sub.subject || "-"}</td>
+                            <td>${obtained}</td>
+                            <td>${max}</td>
+                            <td>${calculateGrade(obtained, max)}</td>
+                            <td>${perc}%</td>
+                          </tr>
+                        `;
+                      })
+                      .join("")
+                  : `<tr><td colspan="5">No Subjects Found</td></tr>`
+              }
+
               <tr class="total-row">
                 <td>TOTAL</td>
-                <td>${student.subjects.reduce((a, b) => a + b.marks, 0)}</td>
-                <td>${student.subjects.reduce((a, b) => a + b.maxMarks, 0)}</td>
+                <td>
+                  ${subjects.reduce(
+                    (a, b) => a + (b.marks ?? b.obtained ?? 0),
+                    0,
+                  )}
+                </td>
+                <td>
+                  ${subjects.reduce((a, b) => a + (b.maxMarks ?? 100), 0)}
+                </td>
                 <td>-</td>
-                <td>${student.percentage}%</td>
+                <td>${percentage}%</td>
               </tr>
             </tbody>
           </table>
 
-          <div class="result-box">
-            <b>Remark:</b> ${
-              student.percentage >= 40
-                ? "<span style='color:green;font-weight:bold;'>SUCCESSFUL</span>"
-                : "<span style='color:red;font-weight:bold;'>UNSUCCESSFUL</span>"
+          <div style="padding:15px;">
+            <b>Result:</b> ${
+              percentage >= 40
+                ? "<span style='color:green;'>PASS</span>"
+                : "<span style='color:red;'>FAIL</span>"
             }
             <br/><br/>
-            <b>Overall Percentage:</b> ${student.percentage}%
-            <br/><br/>
-            <b>Result Declared On:</b> ${new Date().toLocaleDateString()}
+            <b>Declared On:</b> ${new Date().toLocaleDateString()}
           </div>
-
-          <div class="signature">
-            <div class="sign-label">Signature</div>
-            <div style="font-size:11px;font-weight:bold;">DIRECTOR</div>
-            <div style="font-size:11px;">BOARD OF EXAMINATIONS AND EVALUATION</div>
-          </div>
-
-          <div class="footer">Computer generated result does not require a signature.</div>
 
         </body>
       </html>
     `;
 
-    const printWindow = window.open("", "", "width=800,height=600");
+    const printWindow = window.open("", "", "width=900,height=700");
     printWindow.document.write(htmlContent);
     printWindow.document.close();
 
