@@ -44,7 +44,7 @@ export default function Home() {
       case "result":
         return <Result />;
       case "certificate":
-        return <Certificate />;
+        return <Certificate/>
       case "id":
         return <Id />;
       case "record":
