@@ -84,7 +84,7 @@ export default function ResultView({ student, onClose }) {
               <strong>Semester:</strong> {student.semester || "-"}
             </div>
             <div>
-              <strong>Roll No:</strong> {student.rollNo || "-"}
+              <strong>Roll No:</strong> {student.rollNo || ""}
             </div>
           </div>
 
