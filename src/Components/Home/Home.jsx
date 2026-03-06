@@ -17,6 +17,7 @@ import Certificate from "../Certificate/Certificate";
 import Id from "../Id/Id";
 import Result from "../Result/Result";
 import RecordedLectures from "../RecordedLecture/RecordedLecture";
+import Assignment from "../Assignment/Assignment";
 
 export default function Home() {
   const [currentView, setCurrentView] = useState("dashboard");
@@ -49,6 +50,8 @@ export default function Home() {
         return <Id />;
       case "record":
         return <RecordedLectures />;
+      case "assignment":
+        return <Assignment />;
       default:
         return <Dashboard />;
     }
