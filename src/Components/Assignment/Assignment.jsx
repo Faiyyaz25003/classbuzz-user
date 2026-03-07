@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -91,9 +92,13 @@ function Toast({ msg, type, onClose }) {
 
 export default function Assignment() {
   const [cards, setCards] = useState([]);
+
+  const [studentName, setStudentName] = useState("");
   const [selectedClass, setSelectedClass] = useState("");
   const [selectedFolder, setSelectedFolder] = useState("");
   const [password, setPassword] = useState("");
+  const [file, setFile] = useState(null);
+
   const [toast, setToast] = useState(null);
 
   const showToast = (msg, type) => setToast({ msg, type });
@@ -113,6 +118,11 @@ export default function Assignment() {
   /* ---------------- Submit ---------------- */
 
   const handleSubmit = () => {
+    if (!studentName) {
+      showToast("Student name likho!", "error");
+      return;
+    }
+
     if (!selectedClass) {
       showToast("Class select karo!", "error");
       return;
@@ -120,6 +130,11 @@ export default function Assignment() {
 
     if (!selectedFolder) {
       showToast("Folder select karo!", "error");
+      return;
+    }
+
+    if (!file) {
+      showToast("File choose karo!", "error");
       return;
     }
 
@@ -137,7 +152,32 @@ export default function Assignment() {
       return;
     }
 
-    showToast("Folder Access Granted ✅", "success");
+    /* -------- Save File -------- */
+
+    const updatedCards = cards.map((c) => {
+      if (c.id === folder.id) {
+        return {
+          ...c,
+          files: [
+            ...c.files,
+            {
+              student: studentName,
+              fileName: file.name,
+            },
+          ],
+        };
+      }
+      return c;
+    });
+
+    setCards(updatedCards);
+    setSharedCards(updatedCards);
+
+    showToast("Assignment Submitted ✅", "success");
+
+    setStudentName("");
+    setPassword("");
+    setFile(null);
   };
 
   return (
@@ -146,9 +186,19 @@ export default function Assignment() {
         {/* ---------------- FORM ---------------- */}
 
         <div className="bg-white border rounded-2xl p-6 shadow">
-          <h2 className="text-lg font-bold mb-4">Select Folder</h2>
+          <h2 className="text-lg font-bold mb-4">Submit Assignment</h2>
 
-          {/* Class Dropdown */}
+          {/* Student Name */}
+
+          <input
+            type="text"
+            placeholder="Student Name"
+            value={studentName}
+            onChange={(e) => setStudentName(e.target.value)}
+            className="w-full border rounded-lg px-4 py-2 mb-4"
+          />
+
+          {/* Class */}
 
           <select
             value={selectedClass}
@@ -167,7 +217,7 @@ export default function Assignment() {
             ))}
           </select>
 
-          {/* Folder Dropdown */}
+          {/* Folder */}
 
           <select
             value={selectedFolder}
@@ -193,11 +243,19 @@ export default function Assignment() {
             className="w-full border rounded-lg px-4 py-2 mb-4"
           />
 
+          {/* File Upload */}
+
+          <input
+            type="file"
+            onChange={(e) => setFile(e.target.files[0])}
+            className="w-full border rounded-lg px-4 py-2 mb-4"
+          />
+
           <button
             onClick={handleSubmit}
             className="w-full bg-indigo-500 hover:bg-indigo-600 text-white py-2 rounded-lg"
           >
-            Open Folder
+            Submit Assignment
           </button>
         </div>
 
