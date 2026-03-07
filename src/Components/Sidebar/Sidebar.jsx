@@ -42,6 +42,7 @@ export default function Sidebar({ currentView, setCurrentView }) {
     { id: "certificate", name: "Certificate", icon: FileText },
     { id: "assignment", name: "Assignment", icon: FileText },
     { id: "upcomingExams", name: "UpcomingExams", icon: FileText },
+    { id: "libraryManagement", name: "Library Management", icon: FileText },
     { id: "id", name: "UserId", icon: FileText },
   ];
 

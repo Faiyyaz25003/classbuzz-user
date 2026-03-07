@@ -19,6 +19,7 @@ import Result from "../Result/Result";
 import RecordedLectures from "../RecordedLecture/RecordedLecture";
 import Assignment from "../Assignment/Assignment";
 import UpcomingExams from "../UpcomingExams/UpcomingExams";
+import Library from "../LibraryManagement/LibraryManagement";
 
 export default function Home() {
   const [currentView, setCurrentView] = useState("dashboard");
@@ -35,6 +36,8 @@ export default function Home() {
         return <Leave />;
       case "schedule":
         return <Schedule />;
+      case "libraryManagement":
+        return <Library />;
       case "event":
         return <Event />;
          case "leave":
