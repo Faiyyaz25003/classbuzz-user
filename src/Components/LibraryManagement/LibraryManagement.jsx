@@ -686,7 +686,9 @@ export default function LibraryPage() {
         background: "#f8fafc",
         fontFamily: "'Segoe UI', sans-serif",
         color: "#1e293b",
-        padding: "40px 48px",
+              padding: "40px 48px",
+              marginTop: "30px",
+        marginLeft: "300px",
       }}
     >
       {/* Header */}
@@ -731,7 +733,7 @@ export default function LibraryPage() {
                 letterSpacing: "-0.5px",
               }}
             >
-              Admin Library
+              User Library
             </h1>
           </div>
           <p style={{ margin: 0, color: "#94a3b8", fontSize: 14 }}>
