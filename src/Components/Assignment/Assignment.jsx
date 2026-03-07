@@ -1,76 +1,13 @@
 
+
+
 "use client";
 
 import { useState, useEffect } from "react";
+import axios from "axios";
 
-const GRADIENTS = [
-  "from-blue-400 to-indigo-500",
-  "from-emerald-400 to-teal-500",
-  "from-amber-400 to-orange-500",
-  "from-rose-400 to-pink-500",
-  "from-violet-400 to-purple-500",
-];
-
-const EMOJIS = ["📘", "📗", "📙", "📕", "📒"];
-
-const STORAGE_KEY = "__vaultCards_v1";
-
-/* ---------------- Dummy Data ---------------- */
-
-const DUMMY_CARDS = [
-  {
-    id: 1,
-    className: "BCA",
-    folder: "Semester 1",
-    password: "123",
-    colorIdx: 0,
-    files: [],
-  },
-  {
-    id: 2,
-    className: "BCA",
-    folder: "Semester 2",
-    password: "123",
-    colorIdx: 1,
-    files: [],
-  },
-  {
-    id: 3,
-    className: "BBA",
-    folder: "Semester 1",
-    password: "456",
-    colorIdx: 2,
-    files: [],
-  },
-  {
-    id: 4,
-    className: "BBA",
-    folder: "Semester 2",
-    password: "456",
-    colorIdx: 3,
-    files: [],
-  },
-];
-
-/* ---------------- Storage ---------------- */
-
-function getSharedCards() {
-  try {
-    const raw = window[STORAGE_KEY];
-    if (Array.isArray(raw) && raw.length) return raw;
-
-    window[STORAGE_KEY] = DUMMY_CARDS;
-    return DUMMY_CARDS;
-  } catch {
-    return DUMMY_CARDS;
-  }
-}
-
-function setSharedCards(cards) {
-  window[STORAGE_KEY] = cards;
-}
-
-/* ---------------- Toast ---------------- */
+const API_FOLDER = "http://localhost:5000/api/folders";
+const API_ASSIGNMENT = "http://localhost:5000/api/assignments";
 
 function Toast({ msg, type, onClose }) {
   useEffect(() => {
@@ -80,22 +17,24 @@ function Toast({ msg, type, onClose }) {
 
   return (
     <div
-      className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl shadow-lg text-sm font-semibold
-      ${type === "success" ? "bg-green-500 text-white" : "bg-red-500 text-white"}`}
+      className={`fixed bottom-6 right-6 px-5 py-3 rounded-xl text-white ${
+        type === "success" ? "bg-green-500" : "bg-red-500"
+      }`}
     >
       {msg}
     </div>
   );
 }
 
-/* ---------------- Component ---------------- */
-
 export default function Assignment() {
-  const [cards, setCards] = useState([]);
+  const [folders, setFolders] = useState([]);
 
-  const [studentName, setStudentName] = useState("");
+  const [classes, setClasses] = useState([]);
+
   const [selectedClass, setSelectedClass] = useState("");
   const [selectedFolder, setSelectedFolder] = useState("");
+
+  const [studentName, setStudentName] = useState("");
   const [password, setPassword] = useState("");
   const [file, setFile] = useState(null);
 
@@ -103,196 +42,154 @@ export default function Assignment() {
 
   const showToast = (msg, type) => setToast({ msg, type });
 
+  /* ================= GET FOLDERS ================= */
+
   useEffect(() => {
-    setCards(getSharedCards());
+    const fetchFolders = async () => {
+      const res = await axios.get(API_FOLDER);
+
+      setFolders(res.data);
+
+      const uniqueClasses = [...new Set(res.data.map((f) => f.className))];
+
+      setClasses(uniqueClasses);
+    };
+
+    fetchFolders();
   }, []);
 
-  /* -------- Unique Classes -------- */
+  /* ================= FILTER FOLDERS ================= */
 
-  const classes = [...new Set(cards.map((c) => c.className))];
+  const filteredFolders = folders.filter((f) => f.className === selectedClass);
 
-  /* -------- Filter folders by class -------- */
+  /* ================= SUBMIT ASSIGNMENT ================= */
 
-  const filteredFolders = cards.filter((c) => c.className === selectedClass);
-
-  /* ---------------- Submit ---------------- */
-
-  const handleSubmit = () => {
-    if (!studentName) {
-      showToast("Student name likho!", "error");
+  const submitAssignment = async () => {
+    if (!studentName || !selectedClass || !selectedFolder || !file) {
+      showToast("Fill all fields", "error");
       return;
     }
 
-    if (!selectedClass) {
-      showToast("Class select karo!", "error");
-      return;
-    }
-
-    if (!selectedFolder) {
-      showToast("Folder select karo!", "error");
-      return;
-    }
-
-    if (!file) {
-      showToast("File choose karo!", "error");
-      return;
-    }
-
-    const folder = cards.find(
-      (c) => c.className === selectedClass && c.folder === selectedFolder,
-    );
+    const folder = folders.find((f) => f._id === selectedFolder);
 
     if (!folder) {
-      showToast("Folder nahi mila!", "error");
+      showToast("Folder not found", "error");
       return;
     }
 
     if (folder.password !== password) {
-      showToast("Wrong Password!", "error");
+      showToast("Wrong Password", "error");
       return;
     }
 
-    /* -------- Save File -------- */
+    const formData = new FormData();
 
-    const updatedCards = cards.map((c) => {
-      if (c.id === folder.id) {
-        return {
-          ...c,
-          files: [
-            ...c.files,
-            {
-              student: studentName,
-              fileName: file.name,
-            },
-          ],
-        };
-      }
-      return c;
-    });
+    formData.append("studentName", studentName);
+    formData.append("folderId", selectedFolder);
+    formData.append("file", file);
 
-    setCards(updatedCards);
-    setSharedCards(updatedCards);
+    try {
+      await axios.post(API_ASSIGNMENT + "/upload", formData);
 
-    showToast("Assignment Submitted ✅", "success");
+      showToast("Assignment uploaded", "success");
 
-    setStudentName("");
-    setPassword("");
-    setFile(null);
+      setStudentName("");
+      setPassword("");
+      setFile(null);
+    } catch (err) {
+      showToast("Upload failed", "error");
+    }
   };
 
   return (
-    <div className="min-h-screen mt-[30px] ml-[250px] bg-gray-50 p-10">
-      <div className="max-w-5xl mx-auto grid grid-cols-2 gap-6">
-        {/* ---------------- FORM ---------------- */}
+    <div className="min-h-screen ml-[350px] mt-[50px] p-10 bg-gray-50">
+      <h1 className="text-2xl font-bold mb-6">Submit Assignment</h1>
 
-        <div className="bg-white border rounded-2xl p-6 shadow">
-          <h2 className="text-lg font-bold mb-4">Submit Assignment</h2>
+      <div className="grid grid-cols-2 gap-6">
+        {/* FORM */}
 
-          {/* Student Name */}
-
+        <div className="bg-white p-6 rounded-xl shadow">
           <input
-            type="text"
+            className="border w-full mb-3 p-2"
             placeholder="Student Name"
             value={studentName}
             onChange={(e) => setStudentName(e.target.value)}
-            className="w-full border rounded-lg px-4 py-2 mb-4"
           />
 
-          {/* Class */}
+          {/* CLASS */}
 
           <select
+            className="border w-full mb-3 p-2"
             value={selectedClass}
             onChange={(e) => {
               setSelectedClass(e.target.value);
               setSelectedFolder("");
             }}
-            className="w-full border rounded-lg px-4 py-2 mb-4"
           >
             <option value="">Select Class</option>
 
-            {classes.map((cls, i) => (
-              <option key={i} value={cls}>
-                {cls}
-              </option>
+            {classes.map((c) => (
+              <option key={c}>{c}</option>
             ))}
           </select>
 
-          {/* Folder */}
+          {/* FOLDER */}
 
           <select
+            className="border w-full mb-3 p-2"
             value={selectedFolder}
             onChange={(e) => setSelectedFolder(e.target.value)}
-            className="w-full border rounded-lg px-4 py-2 mb-4"
           >
             <option value="">Select Folder</option>
 
-            {filteredFolders.map((folder) => (
-              <option key={folder.id} value={folder.folder}>
-                {folder.folder}
+            {filteredFolders.map((f) => (
+              <option key={f._id} value={f._id}>
+                {f.docName}
               </option>
             ))}
           </select>
 
-          {/* Password */}
+          {/* PASSWORD */}
 
           <input
             type="password"
+            className="border w-full mb-3 p-2"
             placeholder="Folder Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full border rounded-lg px-4 py-2 mb-4"
           />
 
-          {/* File Upload */}
+          {/* FILE */}
 
           <input
             type="file"
+            className="border w-full mb-3 p-2"
             onChange={(e) => setFile(e.target.files[0])}
-            className="w-full border rounded-lg px-4 py-2 mb-4"
           />
 
           <button
-            onClick={handleSubmit}
-            className="w-full bg-indigo-500 hover:bg-indigo-600 text-white py-2 rounded-lg"
+            onClick={submitAssignment}
+            className="bg-indigo-600 text-white px-4 py-2 rounded w-full"
           >
             Submit Assignment
           </button>
         </div>
 
-        {/* ---------------- Folder Cards ---------------- */}
+        {/* FOLDER LIST */}
 
-        <div className="bg-white border rounded-2xl p-6 shadow">
-          <h2 className="text-lg font-bold mb-4">Folders</h2>
+        <div className="bg-white p-6 rounded-xl shadow">
+          <h2 className="font-bold mb-4">Folders</h2>
 
           {!selectedClass ? (
-            <p className="text-gray-500 text-sm">Pehle class select karo</p>
+            <p>Select class first</p>
           ) : (
-            <div className="grid grid-cols-2 gap-3">
-              {filteredFolders.map((card) => (
-                <div
-                  key={card.id}
-                  className="rounded-xl border overflow-hidden"
-                >
-                  <div
-                    className={`bg-gradient-to-br ${GRADIENTS[card.colorIdx]} h-20 flex items-center justify-center`}
-                  >
-                    <span className="text-3xl">{EMOJIS[card.colorIdx]}</span>
-                  </div>
+            filteredFolders.map((f) => (
+              <div key={f._id} className="border p-3 mb-3 rounded">
+                <p className="font-semibold">{f.docName}</p>
 
-                  <div className="bg-gray-50 p-2">
-                    <h3 className="text-xs font-semibold">{card.folder}</h3>
-
-                    <p className="text-xs text-gray-500">
-                      Class: {card.className}
-                    </p>
-
-                    <p className="text-xs text-gray-500">
-                      📎 {card.files.length} files
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                <p className="text-xs text-gray-500">Teacher: {f.teacher}</p>
+              </div>
+            ))
           )}
         </div>
       </div>
