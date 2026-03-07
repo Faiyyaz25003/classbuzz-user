@@ -18,6 +18,7 @@ import Id from "../Id/Id";
 import Result from "../Result/Result";
 import RecordedLectures from "../RecordedLecture/RecordedLecture";
 import Assignment from "../Assignment/Assignment";
+import UpcomingExams from "../UpcomingExams/UpcomingExams";
 
 export default function Home() {
   const [currentView, setCurrentView] = useState("dashboard");
@@ -50,6 +51,8 @@ export default function Home() {
         return <Id />;
       case "record":
         return <RecordedLectures />;
+      case "upcomingExams":
+        return <UpcomingExams />;
       case "assignment":
         return <Assignment />;
       default:
