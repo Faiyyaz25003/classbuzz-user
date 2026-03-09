@@ -34,13 +34,15 @@ const api = {
   },
 };
 
-// ─── PDF Viewer ─────────────────────────────────────────────────────
+/* ─── PDF VIEWER ───────────────────────────────────────────────── */
 function PDFViewer({ book, onClose }) {
-  const [isFull, setIsFull] = useState(false);
-  const pdfUrl =
-    book.file ||
-    book.pdf ||
-    (book.pdfFile ? `http://localhost:5000/uploads/${book.pdfFile}` : "");
+  const [full, setFull] = useState(false);
+  const raw = book.file || book.pdf || book.pdfFile || "";
+  const url = raw.startsWith("http")
+    ? raw
+    : raw
+      ? `http://localhost:5000/uploads/${raw}`
+      : "";
 
   return (
     <div
@@ -48,8 +50,8 @@ function PDFViewer({ book, onClose }) {
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(2,6,23,0.9)",
-        backdropFilter: "blur(8px)",
+        background: "rgba(15,23,42,0.65)",
+        backdropFilter: "blur(6px)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -59,16 +61,15 @@ function PDFViewer({ book, onClose }) {
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: "#0f1629",
-          border: "1px solid #1e3a5f",
-          borderRadius: isFull ? 0 : 20,
-          width: isFull ? "100vw" : "min(95vw, 1100px)",
-          height: isFull ? "100vh" : "min(92vh, 820px)",
+          background: "#fff",
+          borderRadius: full ? 0 : 18,
+          width: full ? "100vw" : "min(95vw,1080px)",
+          height: full ? "100vh" : "min(92vh,800px)",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
-          boxShadow: "0 40px 100px rgba(0,0,0,0.6)",
-          transition: "all 0.3s ease",
+          boxShadow: "0 32px 80px rgba(0,0,0,0.2)",
+          transition: "all 0.3s",
         }}
       >
         <div
@@ -76,37 +77,43 @@ function PDFViewer({ book, onClose }) {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            padding: "14px 20px",
-            borderBottom: "1px solid #1e3a5f",
-            background: "#0a1020",
+            padding: "13px 18px",
+            borderBottom: "1.5px solid #f1f5f9",
             flexShrink: 0,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div
               style={{
                 width: 36,
                 height: 36,
                 borderRadius: 9,
-                background: `${book.color || "#6366f1"}18`,
-                border: `1px solid ${book.color || "#6366f1"}33`,
+                background: book.bg || "#eef2ff",
+                border: `1.5px solid ${book.color || "#6366f1"}22`,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: 16,
+                fontSize: 17,
               }}
             >
               📚
             </div>
             <div>
-              <div style={{ color: "#e2e8f0", fontWeight: 700, fontSize: 14 }}>
+              <div
+                style={{
+                  fontWeight: 700,
+                  fontSize: 14,
+                  color: "#0f172a",
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                }}
+              >
                 {book.name || book.bookName}
               </div>
               <span
                 style={{
                   fontSize: 10,
                   color: book.color || "#6366f1",
-                  background: `${book.color || "#6366f1"}15`,
+                  background: book.bg || "#eef2ff",
                   padding: "2px 8px",
                   borderRadius: 20,
                   fontWeight: 600,
@@ -116,67 +123,50 @@ function PDFViewer({ book, onClose }) {
               </span>
             </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: "flex", gap: 8 }}>
             <button
-              onClick={() => setIsFull((f) => !f)}
+              onClick={() => setFull((f) => !f)}
               style={{
                 width: 34,
                 height: 34,
-                borderRadius: 8,
-                background: "rgba(255,255,255,0.05)",
-                border: "1px solid #1e3a5f",
+                borderRadius: 9,
+                background: "#f8fafc",
+                border: "1.5px solid #e2e8f0",
                 color: "#64748b",
                 cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
               }}
             >
-              {isFull ? "⊡" : "⛶"}
+              {full ? "⊡" : "⛶"}
             </button>
             <button
               onClick={onClose}
               style={{
                 width: 34,
                 height: 34,
-                borderRadius: 8,
-                background: "rgba(239,68,68,0.1)",
-                border: "1px solid rgba(239,68,68,0.3)",
-                color: "#f87171",
+                borderRadius: 9,
+                background: "#fef2f2",
+                border: "1.5px solid #fecaca",
+                color: "#ef4444",
                 cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
               }}
             >
               ✕
             </button>
           </div>
         </div>
-        <div style={{ flex: 1, background: "#060d1a" }}>
+        <div style={{ flex: 1, background: "#f8fafc" }}>
           <iframe
-            src={pdfUrl}
+            src={url}
             title={book.name || book.bookName}
             style={{ width: "100%", height: "100%", border: "none" }}
           />
-        </div>
-        <div
-          style={{
-            padding: "8px 20px",
-            background: "#0a1020",
-            borderTop: "1px solid #1e3a5f",
-            fontSize: 11,
-            color: "#334155",
-          }}
-        >
-          📄 Click outside or press ✕ to close
         </div>
       </div>
     </div>
   );
 }
 
-// ─── Get Book / Issue Modal ─────────────────────────────────────────
+/* ─── GET BOOK MODAL ───────────────────────────────────────────── */
 function GetBookModal({ book, onClose, onSuccess }) {
   const [form, setForm] = useState({
     studentName: "",
@@ -184,7 +174,7 @@ function GetBookModal({ book, onClose, onSuccess }) {
     issueDate: "",
   });
   const [loading, setLoading] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [done, setDone] = useState(false);
   const [error, setError] = useState("");
 
   const endDate = form.issueDate
@@ -195,25 +185,37 @@ function GetBookModal({ book, onClose, onSuccess }) {
       })()
     : "";
 
-  const handleSubmit = async () => {
+  const submit = async () => {
     if (!form.studentName || !form.department || !form.issueDate) {
-      setError("All fields are required");
+      setError("All fields required");
       return;
     }
     setError("");
     setLoading(true);
-    const result = await api.issueBook({ bookId: book._id, ...form });
+    const r = await api.issueBook({ bookId: book._id, ...form });
     setLoading(false);
-    if (result.success) {
-      setSubmitted(true);
+    if (r.success) {
+      setDone(true);
       setTimeout(() => {
-        onSuccess && onSuccess();
+        onSuccess?.();
         onClose();
-      }, 1800);
-    } else setError(result.message || "Failed to issue book");
+      }, 1600);
+    } else setError(r.message || "Failed to issue book");
   };
 
   const col = book.color || "#6366f1";
+  const inp = {
+    width: "100%",
+    background: "#f8fafc",
+    border: "1.5px solid #e8eaf0",
+    borderRadius: 10,
+    padding: "11px 14px",
+    color: "#1a1f36",
+    fontSize: 13,
+    outline: "none",
+    boxSizing: "border-box",
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
+  };
 
   return (
     <div
@@ -221,8 +223,8 @@ function GetBookModal({ book, onClose, onSuccess }) {
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(2,6,23,0.85)",
-        backdropFilter: "blur(8px)",
+        background: "rgba(15,23,42,0.5)",
+        backdropFilter: "blur(6px)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -232,58 +234,50 @@ function GetBookModal({ book, onClose, onSuccess }) {
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: "#0f1629",
-          border: "1px solid #1e3a5f",
-          borderRadius: 24,
-          width: "min(92vw, 480px)",
+          background: "#fff",
+          borderRadius: 22,
+          width: "min(92vw,460px)",
           overflow: "hidden",
-          boxShadow: "0 40px 100px rgba(0,0,0,0.6)",
+          boxShadow: "0 32px 80px rgba(0,0,0,0.18)",
         }}
       >
         {/* Header */}
         <div
           style={{
-            padding: "24px 28px",
-            position: "relative",
-            background: `linear-gradient(135deg, ${col}22, ${col}08)`,
-            borderBottom: "1px solid #1e3a5f",
+            background: `linear-gradient(135deg, ${col}, ${col}cc)`,
+            padding: "22px 26px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
           }}
         >
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              backgroundImage: `radial-gradient(circle at 80% 50%, ${col}12, transparent 70%)`,
-            }}
-          />
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 14,
-              position: "relative",
-            }}
-          >
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div
               style={{
-                width: 52,
-                height: 52,
-                borderRadius: 14,
-                background: `${col}20`,
-                border: `1px solid ${col}44`,
+                width: 42,
+                height: 42,
+                borderRadius: 12,
+                background: "rgba(255,255,255,0.2)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: 24,
+                fontSize: 20,
               }}
             >
               📚
             </div>
             <div>
-              <div style={{ color: "#f1f5f9", fontWeight: 800, fontSize: 18 }}>
-                Get This Book
+              <div
+                style={{
+                  color: "#fff",
+                  fontWeight: 800,
+                  fontSize: 16,
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                }}
+              >
+                Get Book
               </div>
-              <div style={{ color: "#64748b", fontSize: 13, marginTop: 2 }}>
+              <div style={{ color: "rgba(255,255,255,0.75)", fontSize: 12 }}>
                 {book.name}
               </div>
             </div>
@@ -291,50 +285,65 @@ function GetBookModal({ book, onClose, onSuccess }) {
           <button
             onClick={onClose}
             style={{
-              position: "absolute",
-              top: 18,
-              right: 20,
               width: 32,
               height: 32,
               borderRadius: 8,
-              background: "rgba(255,255,255,0.06)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              color: "#64748b",
+              background: "rgba(255,255,255,0.2)",
+              border: "none",
+              color: "#fff",
               cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              fontSize: 16,
             }}
           >
             ✕
           </button>
         </div>
 
-        <div style={{ padding: "26px 28px" }}>
-          {submitted ? (
-            <div style={{ textAlign: "center", padding: "24px 0" }}>
-              <div style={{ fontSize: 52, marginBottom: 14 }}>✅</div>
-              <div style={{ fontWeight: 800, fontSize: 20, color: "#f1f5f9" }}>
+        {/* Body */}
+        <div
+          style={{
+            padding: "26px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 14,
+          }}
+        >
+          {done ? (
+            <div style={{ textAlign: "center", padding: "20px 0" }}>
+              <div style={{ fontSize: 48, marginBottom: 12 }}>✅</div>
+              <div
+                style={{
+                  fontWeight: 800,
+                  fontSize: 18,
+                  color: "#0f172a",
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                }}
+              >
                 Book Issued!
               </div>
-              <div style={{ color: "#64748b", fontSize: 13, marginTop: 6 }}>
+              <div style={{ color: "#94a3b8", fontSize: 13, marginTop: 6 }}>
                 Successfully issued to{" "}
-                <span style={{ color: "#60a5fa" }}>{form.studentName}</span>
+                <span style={{ color: col, fontWeight: 600 }}>
+                  {form.studentName}
+                </span>
               </div>
-              <div style={{ marginTop: 12, fontSize: 12, color: "#334155" }}>
-                Return by: <span style={{ color: "#34d399" }}>{endDate}</span>
+              <div style={{ marginTop: 8, fontSize: 12, color: "#64748b" }}>
+                Return by:{" "}
+                <span style={{ color: "#10b981", fontWeight: 600 }}>
+                  {endDate}
+                </span>
               </div>
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <>
               {error && (
                 <div
                   style={{
-                    background: "rgba(239,68,68,0.1)",
-                    border: "1px solid rgba(239,68,68,0.3)",
-                    borderRadius: 10,
-                    padding: "10px 14px",
-                    color: "#f87171",
+                    background: "#fef2f2",
+                    border: "1px solid #fecaca",
+                    borderRadius: 9,
+                    padding: "9px 14px",
+                    color: "#ef4444",
                     fontSize: 13,
                   }}
                 >
@@ -344,26 +353,25 @@ function GetBookModal({ book, onClose, onSuccess }) {
 
               {[
                 {
-                  label: "Your Name",
+                  label: "YOUR NAME",
                   key: "studentName",
-                  placeholder: "Enter your full name",
+                  ph: "Enter your full name",
                 },
                 {
-                  label: "Department",
+                  label: "DEPARTMENT",
                   key: "department",
-                  placeholder: "e.g. Computer Science",
+                  ph: "e.g. Computer Science",
                 },
-              ].map(({ label, key, placeholder }) => (
+              ].map(({ label, key, ph }) => (
                 <div key={key}>
                   <label
                     style={{
                       display: "block",
-                      fontSize: 11,
+                      fontSize: 10,
                       fontWeight: 700,
-                      color: "#475569",
+                      color: "#94a3b8",
+                      letterSpacing: "1px",
                       marginBottom: 6,
-                      letterSpacing: "0.8px",
-                      textTransform: "uppercase",
                     }}
                   >
                     {label}
@@ -373,24 +381,14 @@ function GetBookModal({ book, onClose, onSuccess }) {
                     onChange={(e) =>
                       setForm((f) => ({ ...f, [key]: e.target.value }))
                     }
-                    placeholder={placeholder}
-                    style={{
-                      width: "100%",
-                      background: "rgba(255,255,255,0.04)",
-                      border: "1px solid #1e3a5f",
-                      borderRadius: 10,
-                      padding: "11px 14px",
-                      color: "#e2e8f0",
-                      fontSize: 13,
-                      outline: "none",
-                      boxSizing: "border-box",
-                    }}
+                    placeholder={ph}
+                    style={inp}
                     onFocus={(e) => {
                       e.target.style.borderColor = col;
-                      e.target.style.boxShadow = `0 0 0 3px ${col}15`;
+                      e.target.style.boxShadow = `0 0 0 3px ${col}18`;
                     }}
                     onBlur={(e) => {
-                      e.target.style.borderColor = "#1e3a5f";
+                      e.target.style.borderColor = "#e8eaf0";
                       e.target.style.boxShadow = "none";
                     }}
                   />
@@ -408,15 +406,14 @@ function GetBookModal({ book, onClose, onSuccess }) {
                   <label
                     style={{
                       display: "block",
-                      fontSize: 11,
+                      fontSize: 10,
                       fontWeight: 700,
-                      color: "#475569",
+                      color: "#94a3b8",
+                      letterSpacing: "1px",
                       marginBottom: 6,
-                      letterSpacing: "0.8px",
-                      textTransform: "uppercase",
                     }}
                   >
-                    Issue Date
+                    ISSUE DATE
                   </label>
                   <input
                     type="date"
@@ -424,47 +421,31 @@ function GetBookModal({ book, onClose, onSuccess }) {
                     onChange={(e) =>
                       setForm((f) => ({ ...f, issueDate: e.target.value }))
                     }
-                    style={{
-                      width: "100%",
-                      background: "rgba(255,255,255,0.04)",
-                      border: "1px solid #1e3a5f",
-                      borderRadius: 10,
-                      padding: "11px 14px",
-                      color: "#e2e8f0",
-                      fontSize: 13,
-                      outline: "none",
-                      boxSizing: "border-box",
-                    }}
+                    style={inp}
                   />
                 </div>
                 <div>
                   <label
                     style={{
                       display: "block",
-                      fontSize: 11,
+                      fontSize: 10,
                       fontWeight: 700,
-                      color: "#475569",
+                      color: "#94a3b8",
+                      letterSpacing: "1px",
                       marginBottom: 6,
-                      letterSpacing: "0.8px",
-                      textTransform: "uppercase",
                     }}
                   >
-                    Due Date <span style={{ color: "#10b981" }}>(Auto)</span>
+                    END DATE <span style={{ color: "#10b981" }}>(Auto)</span>
                   </label>
                   <input
                     type="date"
                     value={endDate}
                     readOnly
                     style={{
-                      width: "100%",
-                      background: "rgba(16,185,129,0.06)",
-                      border: "1px solid rgba(16,185,129,0.25)",
-                      borderRadius: 10,
-                      padding: "11px 14px",
-                      color: "#34d399",
-                      fontSize: 13,
-                      outline: "none",
-                      boxSizing: "border-box",
+                      ...inp,
+                      background: "#f0fdf4",
+                      borderColor: "#bbf7d0",
+                      color: "#16a34a",
                       cursor: "not-allowed",
                     }}
                   />
@@ -475,20 +456,19 @@ function GetBookModal({ book, onClose, onSuccess }) {
                 <label
                   style={{
                     display: "block",
-                    fontSize: 11,
+                    fontSize: 10,
                     fontWeight: 700,
-                    color: "#475569",
+                    color: "#94a3b8",
+                    letterSpacing: "1px",
                     marginBottom: 6,
-                    letterSpacing: "0.8px",
-                    textTransform: "uppercase",
                   }}
                 >
-                  Book
+                  BOOK
                 </label>
                 <div
                   style={{
                     background: `${col}10`,
-                    border: `1px solid ${col}30`,
+                    border: `1.5px solid ${col}30`,
                     borderRadius: 10,
                     padding: "11px 14px",
                     color: col,
@@ -504,31 +484,32 @@ function GetBookModal({ book, onClose, onSuccess }) {
               </div>
 
               <button
-                onClick={handleSubmit}
+                onClick={submit}
                 disabled={loading}
                 style={{
                   background: loading
-                    ? `${col}44`
-                    : `linear-gradient(135deg, ${col}, ${col}bb)`,
+                    ? "#c7d2fe"
+                    : `linear-gradient(135deg,${col},${col}bb)`,
                   border: "none",
-                  borderRadius: 12,
-                  padding: "14px",
+                  borderRadius: 11,
+                  padding: "13px",
                   color: "#fff",
                   fontWeight: 700,
                   fontSize: 15,
                   cursor: loading ? "default" : "pointer",
-                  marginTop: 4,
-                  boxShadow: loading ? "none" : `0 6px 20px ${col}44`,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   gap: 8,
-                  transition: "all 0.2s",
+                  boxShadow: loading ? "none" : `0 4px 14px ${col}44`,
+                  transition: "all 0.3s",
+                  marginTop: 4,
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
                 }}
               >
-                {loading ? "⏳ Processing..." : "✅ Get Book"}
+                {loading ? "⏳ Issuing..." : "✅ Confirm Issue"}
               </button>
-            </div>
+            </>
           )}
         </div>
       </div>
@@ -536,33 +517,33 @@ function GetBookModal({ book, onClose, onSuccess }) {
   );
 }
 
-// ─── Book Card ──────────────────────────────────────────────────────
-function BookCard({ book, showDays, onClick, onGetBook }) {
-  const [hovered, setHovered] = useState(false);
+/* ─── BOOK CARD ─────────────────────────────────────────────────── */
+function BookCard({ book, onClick, onGetBook, showDays }) {
+  const [hov, setHov] = useState(false);
   const col = book.color || "#6366f1";
-  const daysLeft = book.daysLeft;
+  const dl = book.daysLeft;
 
   return (
     <div
       onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
       style={{
-        background: hovered ? "#0d1829" : "#0a1020",
-        border: `1px solid ${hovered ? col : "#1e3a5f"}`,
-        borderRadius: 16,
-        padding: "20px",
+        background: "#fff",
+        border: `1.5px solid ${hov ? col : "#eaecf4"}`,
+        borderRadius: 14,
+        padding: "18px",
         display: "flex",
         flexDirection: "column",
-        gap: 12,
+        gap: 10,
         cursor: "pointer",
-        transition: "all 0.2s ease",
+        transition: "all 0.2s",
         position: "relative",
         overflow: "hidden",
-        transform: hovered ? "translateY(-3px)" : "none",
-        boxShadow: hovered
-          ? `0 12px 32px rgba(0,0,0,0.4), 0 0 0 1px ${col}22`
-          : "none",
+        boxShadow: hov
+          ? `0 12px 32px rgba(0,0,0,0.09), 0 0 0 1px ${col}22`
+          : "0 1px 4px rgba(0,0,0,0.04)",
+        transform: hov ? "translateY(-3px)" : "none",
       }}
     >
       <div
@@ -572,85 +553,79 @@ function BookCard({ book, showDays, onClick, onGetBook }) {
           left: 0,
           right: 0,
           height: 3,
-          background: hovered
-            ? `linear-gradient(90deg, ${col}, ${col}44)`
-            : "transparent",
-          transition: "all 0.2s",
+          background: col,
+          borderRadius: "14px 14px 0 0",
         }}
       />
 
       <div
         style={{
+          width: 44,
+          height: 44,
+          borderRadius: 11,
+          background: book.bg || "#eef2ff",
+          fontSize: 21,
           display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
+          alignItems: "center",
+          justifyContent: "center",
+          border: `1px solid ${col}22`,
         }}
       >
-        <div
-          style={{
-            width: 46,
-            height: 46,
-            borderRadius: 12,
-            background: `${col}15`,
-            fontSize: 22,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            border: `1px solid ${col}25`,
-          }}
-        >
-          📚
-        </div>
-        {showDays && daysLeft !== undefined && (
-          <div
-            style={{
-              fontSize: 11,
-              fontWeight: 700,
-              padding: "4px 10px",
-              borderRadius: 8,
-              color: daysLeft <= 3 ? "#f87171" : "#fbbf24",
-              background:
-                daysLeft <= 3
-                  ? "rgba(239,68,68,0.12)"
-                  : "rgba(251,191,36,0.12)",
-              border: `1px solid ${daysLeft <= 3 ? "rgba(239,68,68,0.25)" : "rgba(251,191,36,0.25)"}`,
-            }}
-          >
-            ⏰ {daysLeft}d
-          </div>
-        )}
+        📚
       </div>
 
       <div>
         <div
           style={{
-            color: "#e2e8f0",
+            color: "#0f172a",
             fontWeight: 700,
             fontSize: 14,
-            lineHeight: 1.3,
+            lineHeight: 1.35,
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
           }}
         >
           {book.name || book.bookName}
         </div>
-        <div
+        <span
           style={{
             marginTop: 5,
             fontSize: 11,
             color: col,
-            background: `${col}12`,
+            background: book.bg || "#eef2ff",
             display: "inline-block",
             padding: "3px 10px",
             borderRadius: 20,
             fontWeight: 600,
+            border: `1px solid ${col}22`,
           }}
         >
           {book.category}
-        </div>
+        </span>
       </div>
 
       {book.course && (
-        <div style={{ fontSize: 11, color: "#334155" }}>
-          {book.course} · {book.subject}
+        <div style={{ fontSize: 11, color: "#94a3b8" }}>
+          {book.subject} · {book.course}
+        </div>
+      )}
+
+      {showDays && dl !== undefined && (
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 5,
+            fontSize: 11,
+            fontWeight: 700,
+            color: dl <= 3 ? "#ef4444" : dl <= 7 ? "#f59e0b" : "#10b981",
+            background: dl <= 3 ? "#fef2f2" : dl <= 7 ? "#fffbeb" : "#f0fdf4",
+            padding: "4px 10px",
+            borderRadius: 8,
+            width: "fit-content",
+            border: `1px solid ${dl <= 3 ? "#fecaca" : dl <= 7 ? "#fde68a" : "#bbf7d0"}`,
+          }}
+        >
+          ⏰ {dl < 0 ? "Expired" : `${dl}d left`}
         </div>
       )}
 
@@ -666,13 +641,13 @@ function BookCard({ book, showDays, onClick, onGetBook }) {
           style={{
             flex: 1,
             fontSize: 11,
-            color: "#1e3a5f",
+            color: "#cbd5e1",
             display: "flex",
             alignItems: "center",
             gap: 4,
           }}
         >
-          <span>📄</span> Click to view PDF
+          📄 Click to open PDF
         </div>
         {onGetBook && (
           <button
@@ -681,16 +656,17 @@ function BookCard({ book, showDays, onClick, onGetBook }) {
               onGetBook(book);
             }}
             style={{
-              background: `linear-gradient(135deg, ${col}, ${col}99)`,
+              background: `linear-gradient(135deg,${col},${col}bb)`,
               border: "none",
               borderRadius: 8,
-              padding: "6px 14px",
+              padding: "6px 13px",
               color: "#fff",
               fontWeight: 700,
               fontSize: 11,
               cursor: "pointer",
               whiteSpace: "nowrap",
               boxShadow: `0 3px 10px ${col}44`,
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
               transition: "transform 0.15s",
             }}
             onMouseEnter={(e) =>
@@ -706,16 +682,16 @@ function BookCard({ book, showDays, onClick, onGetBook }) {
   );
 }
 
-// ─── My Books Card (for issued books) ───────────────────────────────
+/* ─── MY BOOK CARD (issued) ────────────────────────────────────── */
 function MyBookCard({ book, onClick }) {
-  const [hovered, setHovered] = useState(false);
+  const [hov, setHov] = useState(false);
   const col = book.color || "#6366f1";
   const dl = book.daysLeft;
-  const expired = dl < 0;
-  const critical = !expired && dl <= 3;
-  const sc = expired
+  const exp = dl < 0;
+  const crit = !exp && dl <= 3;
+  const sc = exp
     ? "#ef4444"
-    : critical
+    : crit
       ? "#f97316"
       : dl <= 7
         ? "#f59e0b"
@@ -724,19 +700,24 @@ function MyBookCard({ book, onClick }) {
   return (
     <div
       onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
       style={{
-        background: hovered ? "#0d1829" : "#0a1020",
-        border: `1px solid ${hovered ? sc : "#1e3a5f"}`,
-        borderRadius: 16,
-        padding: "20px",
+        background: "#fff",
+        border: `1.5px solid ${hov ? sc : "#eaecf4"}`,
+        borderRadius: 14,
+        padding: "18px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
         cursor: "pointer",
-        transition: "all 0.2s ease",
-        transform: hovered ? "translateY(-3px)" : "none",
-        boxShadow: hovered ? `0 12px 32px rgba(0,0,0,0.4)` : "none",
+        transition: "all 0.2s",
         position: "relative",
         overflow: "hidden",
+        boxShadow: hov
+          ? `0 12px 32px rgba(0,0,0,0.09)`
+          : "0 1px 4px rgba(0,0,0,0.04)",
+        transform: hov ? "translateY(-3px)" : "none",
       }}
     >
       <div
@@ -746,29 +727,24 @@ function MyBookCard({ book, onClick }) {
           left: 0,
           right: 0,
           height: 3,
-          background: `linear-gradient(90deg, ${sc}, transparent)`,
+          background: sc,
+          borderRadius: "14px 14px 0 0",
         }}
       />
-      <div
-        style={{
-          display: "flex",
-          alignItems: "flex-start",
-          gap: 12,
-          marginBottom: 12,
-        }}
-      >
+
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
         <div
           style={{
             width: 44,
             height: 44,
             borderRadius: 11,
-            flexShrink: 0,
-            background: `${col}15`,
+            background: book.bg || "#eef2ff",
+            fontSize: 21,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontSize: 20,
-            border: `1px solid ${col}25`,
+            border: `1px solid ${col}22`,
+            flexShrink: 0,
           }}
         >
           📚
@@ -776,30 +752,32 @@ function MyBookCard({ book, onClick }) {
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
-              color: "#e2e8f0",
+              color: "#0f172a",
               fontWeight: 700,
               fontSize: 14,
               lineHeight: 1.3,
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
             }}
           >
             {book.bookName}
           </div>
-          <div
+          <span
             style={{
               marginTop: 4,
               fontSize: 11,
               color: col,
-              background: `${col}12`,
+              background: book.bg || "#eef2ff",
               display: "inline-block",
-              padding: "2px 8px",
+              padding: "2px 9px",
               borderRadius: 20,
               fontWeight: 600,
             }}
           >
             {book.category}
-          </div>
+          </span>
         </div>
       </div>
+
       <div
         style={{
           display: "flex",
@@ -807,9 +785,9 @@ function MyBookCard({ book, onClick }) {
           justifyContent: "space-between",
         }}
       >
-        <div style={{ fontSize: 11, color: "#334155" }}>
+        <div style={{ fontSize: 11, color: "#94a3b8" }}>
           Due:{" "}
-          <span style={{ color: "#64748b" }}>
+          <span style={{ color: "#64748b", fontWeight: 600 }}>
             {new Date(book.endDate).toLocaleDateString("en-IN", {
               day: "numeric",
               month: "short",
@@ -820,21 +798,21 @@ function MyBookCard({ book, onClick }) {
           style={{
             fontSize: 11,
             fontWeight: 700,
-            padding: "4px 10px",
-            borderRadius: 8,
             color: sc,
             background: `${sc}12`,
-            border: `1px solid ${sc}25`,
+            padding: "4px 10px",
+            borderRadius: 8,
+            border: `1px solid ${sc}28`,
           }}
         >
-          {expired ? "⚠ Expired" : `⏰ ${dl}d left`}
+          {exp ? "⚠ Expired" : `⏰ ${dl}d left`}
         </div>
       </div>
     </div>
   );
 }
 
-// ─── Section: All Books ─────────────────────────────────────────────
+/* ─── ALL BOOKS SECTION ────────────────────────────────────────── */
 function AllBooksSection({ onOpenPDF, onGetBook }) {
   const [books, setBooks] = useState([]);
   const [search, setSearch] = useState("");
@@ -842,7 +820,7 @@ function AllBooksSection({ onOpenPDF, onGetBook }) {
   const [categories, setCategories] = useState(["All"]);
   const [loading, setLoading] = useState(false);
 
-  const fetch = useCallback(async () => {
+  const fetchBooks = useCallback(async () => {
     setLoading(true);
     const r = await api.getAllBooks(search, category);
     if (r.success) setBooks(r.data);
@@ -850,9 +828,10 @@ function AllBooksSection({ onOpenPDF, onGetBook }) {
   }, [search, category]);
 
   useEffect(() => {
-    const t = setTimeout(fetch, 350);
+    const t = setTimeout(fetchBooks, 350);
     return () => clearTimeout(t);
-  }, [fetch]);
+  }, [fetchBooks]);
+
   useEffect(() => {
     api.getCategories().then((r) => {
       if (r.success) setCategories(r.data);
@@ -860,13 +839,14 @@ function AllBooksSection({ onOpenPDF, onGetBook }) {
   }, []);
 
   return (
-    <div>
+    <>
+      {/* Search + Filter */}
       <div
         style={{
           display: "flex",
           gap: 12,
+          marginBottom: 22,
           flexWrap: "wrap",
-          marginBottom: 24,
           alignItems: "center",
         }}
       >
@@ -877,7 +857,7 @@ function AllBooksSection({ onOpenPDF, onGetBook }) {
               left: 13,
               top: "50%",
               transform: "translateY(-50%)",
-              color: "#334155",
+              color: "#94a3b8",
             }}
           >
             🔍
@@ -888,47 +868,76 @@ function AllBooksSection({ onOpenPDF, onGetBook }) {
             placeholder="Search books..."
             style={{
               width: "100%",
-              background: "#0a1020",
-              border: "1px solid #1e3a5f",
-              borderRadius: 12,
+              background: "#fff",
+              border: "1.5px solid #e2e8f0",
+              borderRadius: 11,
               padding: "11px 16px 11px 38px",
-              color: "#e2e8f0",
+              color: "#1a1f36",
               fontSize: 13,
               outline: "none",
               boxSizing: "border-box",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
             }}
-            onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
-            onBlur={(e) => (e.target.style.borderColor = "#1e3a5f")}
+            onFocus={(e) => (e.target.style.borderColor = "#6366f1")}
+            onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")}
           />
         </div>
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          style={{
-            background: "#0a1020",
-            border: "1px solid #1e3a5f",
-            borderRadius: 12,
-            padding: "11px 16px",
-            color: "#e2e8f0",
-            fontSize: 13,
-            outline: "none",
-            cursor: "pointer",
-            minWidth: 150,
-          }}
-        >
-          {categories.map((c) => (
-            <option key={c} value={c}>
-              {c === "All" ? "All Categories" : c}
-            </option>
-          ))}
-        </select>
+        <div style={{ position: "relative" }}>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            style={{
+              appearance: "none",
+              background: "#fff",
+              border: "1.5px solid #e2e8f0",
+              borderRadius: 11,
+              padding: "11px 36px 11px 16px",
+              color: "#1a1f36",
+              fontSize: 13,
+              fontWeight: 600,
+              outline: "none",
+              cursor: "pointer",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+              minWidth: 160,
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
+            }}
+          >
+            {categories.map((c) => (
+              <option key={c} value={c}>
+                {c === "All" ? "All Categories" : c}
+              </option>
+            ))}
+          </select>
+          <span
+            style={{
+              position: "absolute",
+              right: 12,
+              top: "50%",
+              transform: "translateY(-50%)",
+              color: "#94a3b8",
+              pointerEvents: "none",
+              fontSize: 12,
+            }}
+          >
+            ▼
+          </span>
+        </div>
       </div>
 
+      {/* Grid */}
       {loading ? (
         <div
-          style={{ textAlign: "center", padding: "80px 0", color: "#334155" }}
+          style={{ textAlign: "center", padding: "60px 0", color: "#94a3b8" }}
         >
-          <div style={{ fontSize: 36 }}>⏳</div>
+          ⏳ Loading...
+        </div>
+      ) : books.length === 0 ? (
+        <div
+          style={{ textAlign: "center", padding: "60px 0", color: "#94a3b8" }}
+        >
+          <div style={{ fontSize: 40, marginBottom: 10 }}>📭</div>
+          <div style={{ fontWeight: 600, fontSize: 15 }}>No books found</div>
         </div>
       ) : (
         <div
@@ -938,38 +947,24 @@ function AllBooksSection({ onOpenPDF, onGetBook }) {
             gap: 16,
           }}
         >
-          {books.map((book) => (
+          {books.map((b) => (
             <BookCard
-              key={book._id}
-              book={book}
-              onClick={() => onOpenPDF(book)}
+              key={b._id}
+              book={b}
+              onClick={() => onOpenPDF(b)}
               onGetBook={onGetBook}
             />
           ))}
-          {books.length === 0 && (
-            <div
-              style={{
-                gridColumn: "1/-1",
-                textAlign: "center",
-                padding: "80px 0",
-                color: "#334155",
-              }}
-            >
-              <div style={{ fontSize: 40, marginBottom: 12 }}>📭</div>
-              <div style={{ fontWeight: 600, fontSize: 16 }}>
-                No books found
-              </div>
-            </div>
-          )}
         </div>
       )}
-    </div>
+    </>
   );
 }
 
-// ─── Section: My Books ──────────────────────────────────────────────
-function MyBooksSection({ refreshTrigger, onOpenPDF }) {
+/* ─── MY BOOKS SECTION ─────────────────────────────────────────── */
+function MyBooksSection({ onOpenPDF, refreshTrigger }) {
   const [books, setBooks] = useState([]);
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
 
   const fetchBooks = useCallback(async () => {
@@ -983,68 +978,97 @@ function MyBooksSection({ refreshTrigger, onOpenPDF }) {
     fetchBooks();
   }, [fetchBooks, refreshTrigger]);
 
-  const getPdfUrl = (book) =>
-    book.file ||
-    book.pdf ||
-    (book.pdfFile ? `http://localhost:5000/uploads/${book.pdfFile}` : "");
+  const getPdfUrl = (b) => {
+    const raw = b.file || b.pdf || b.pdfFile || "";
+    if (!raw) return "";
+    if (raw.startsWith("http")) return raw;
+    return `http://localhost:5000/uploads/${raw}`;
+  };
+
+  const filtered = useMemo(
+    () =>
+      books.filter((b) =>
+        (b.bookName || "").toLowerCase().includes(search.toLowerCase()),
+      ),
+    [books, search],
+  );
 
   return (
-    <div>
+    <>
+      <div style={{ position: "relative", maxWidth: 380, marginBottom: 22 }}>
+        <span
+          style={{
+            position: "absolute",
+            left: 13,
+            top: "50%",
+            transform: "translateY(-50%)",
+            color: "#94a3b8",
+          }}
+        >
+          🔍
+        </span>
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search books..."
+          style={{
+            width: "100%",
+            background: "#fff",
+            border: "1.5px solid #e2e8f0",
+            borderRadius: 11,
+            padding: "11px 16px 11px 38px",
+            color: "#1a1f36",
+            fontSize: 13,
+            outline: "none",
+            boxSizing: "border-box",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
+          }}
+          onFocus={(e) => (e.target.style.borderColor = "#ec4899")}
+          onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")}
+        />
+      </div>
+
       {loading ? (
         <div
-          style={{ textAlign: "center", padding: "80px 0", color: "#334155" }}
+          style={{ textAlign: "center", padding: "60px 0", color: "#94a3b8" }}
         >
-          <div style={{ fontSize: 36 }}>⏳</div>
+          ⏳ Loading...
         </div>
-      ) : books.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <div
-          style={{ textAlign: "center", padding: "80px 0", color: "#334155" }}
+          style={{ textAlign: "center", padding: "60px 0", color: "#94a3b8" }}
         >
-          <div style={{ fontSize: 48, marginBottom: 16 }}>🔖</div>
-          <div
-            style={{
-              fontWeight: 700,
-              fontSize: 18,
-              color: "#475569",
-              marginBottom: 8,
-            }}
-          >
-            No books yet
-          </div>
-          <div style={{ fontSize: 13 }}>
-            Browse the collection and get your first book!
-          </div>
+          <div style={{ fontSize: 40, marginBottom: 10 }}>📭</div>
+          <div style={{ fontWeight: 600, fontSize: 15 }}>No books found</div>
         </div>
       ) : (
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))",
             gap: 16,
           }}
         >
-          {books.map((book) => (
+          {filtered.map((b) => (
             <MyBookCard
-              key={book._id}
-              book={book}
+              key={b._id}
+              book={b}
               onClick={() =>
-                onOpenPDF({
-                  ...book,
-                  name: book.bookName,
-                  file: getPdfUrl(book),
-                })
+                onOpenPDF({ ...b, name: b.bookName, file: getPdfUrl(b) })
               }
             />
           ))}
         </div>
       )}
-    </div>
+    </>
   );
 }
 
-// ─── Section: Expiring Soon ─────────────────────────────────────────
+/* ─── EXPIRING SECTION ─────────────────────────────────────────── */
 function ExpiringSoonSection({ onOpenPDF }) {
   const [books, setBooks] = useState([]);
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -1055,69 +1079,129 @@ function ExpiringSoonSection({ onOpenPDF }) {
     });
   }, []);
 
-  const getPdfUrl = (book) =>
-    book.file ||
-    book.pdf ||
-    (book.pdfFile ? `http://localhost:5000/uploads/${book.pdfFile}` : "");
+  const getPdfUrl = (b) => {
+    const raw = b.file || b.pdf || b.pdfFile || "";
+    if (!raw) return "";
+    if (raw.startsWith("http")) return raw;
+    return `http://localhost:5000/uploads/${raw}`;
+  };
+
+  const filtered = useMemo(
+    () =>
+      books.filter((b) =>
+        (b.bookName || "").toLowerCase().includes(search.toLowerCase()),
+      ),
+    [books, search],
+  );
 
   return (
-    <div>
+    <>
+      <div style={{ position: "relative", maxWidth: 380, marginBottom: 22 }}>
+        <span
+          style={{
+            position: "absolute",
+            left: 13,
+            top: "50%",
+            transform: "translateY(-50%)",
+            color: "#94a3b8",
+          }}
+        >
+          🔍
+        </span>
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search books..."
+          style={{
+            width: "100%",
+            background: "#fff",
+            border: "1.5px solid #e2e8f0",
+            borderRadius: 11,
+            padding: "11px 16px 11px 38px",
+            color: "#1a1f36",
+            fontSize: 13,
+            outline: "none",
+            boxSizing: "border-box",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
+          }}
+          onFocus={(e) => (e.target.style.borderColor = "#f59e0b")}
+          onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")}
+        />
+      </div>
+
       {loading ? (
         <div
-          style={{ textAlign: "center", padding: "80px 0", color: "#334155" }}
+          style={{ textAlign: "center", padding: "60px 0", color: "#94a3b8" }}
         >
-          <div style={{ fontSize: 36 }}>⏳</div>
+          ⏳ Loading...
         </div>
-      ) : books.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <div
-          style={{ textAlign: "center", padding: "80px 0", color: "#334155" }}
+          style={{ textAlign: "center", padding: "60px 0", color: "#94a3b8" }}
         >
-          <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
-          <div style={{ fontWeight: 700, fontSize: 18, color: "#475569" }}>
-            No expiring books!
-          </div>
+          <div style={{ fontSize: 40, marginBottom: 10 }}>📭</div>
+          <div style={{ fontWeight: 600, fontSize: 15 }}>No books found</div>
         </div>
       ) : (
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))",
             gap: 16,
           }}
         >
-          {books.map((book) => (
+          {filtered.map((b) => (
             <MyBookCard
-              key={book._id}
-              book={book}
+              key={b._id}
+              book={b}
               onClick={() =>
-                onOpenPDF({
-                  ...book,
-                  name: book.bookName,
-                  file: getPdfUrl(book),
-                })
+                onOpenPDF({ ...b, name: b.bookName, file: getPdfUrl(b) })
               }
             />
           ))}
         </div>
       )}
-    </div>
+    </>
   );
 }
 
-// ─── Main User Page ─────────────────────────────────────────────────
-const navItems = [
-  { key: "all", icon: "📚", label: "All Books", desc: "Browse collection" },
-  { key: "my", icon: "🔖", label: "My Books", desc: "Borrowed books" },
+/* ─── MAIN USER PAGE ───────────────────────────────────────────── */
+const SECTIONS = [
+  {
+    key: "all",
+    label: "All Books",
+    sublabel: (c) => `${c} titles`,
+    icon: "📚",
+    color: "#6366f1",
+    lightBg: "#eef2ff",
+    border: "#c7d2fe",
+    grad: "linear-gradient(135deg,#6366f1,#8b5cf6)",
+  },
+  {
+    key: "my",
+    label: "My Books",
+    sublabel: (c) => `${c} borrowed`,
+    icon: "🔖",
+    color: "#ec4899",
+    lightBg: "#fdf2f8",
+    border: "#fbcfe8",
+    grad: "linear-gradient(135deg,#ec4899,#f43f5e)",
+  },
   {
     key: "expire",
-    icon: "⏰",
     label: "Expiring Soon",
-    desc: "Due within 3 days",
+    sublabel: (c) => `${c} expiring`,
+    icon: "⏰",
+    color: "#f59e0b",
+    lightBg: "#fffbeb",
+    border: "#fde68a",
+    grad: "linear-gradient(135deg,#f59e0b,#f97316)",
   },
 ];
 
 export default function UserLibraryPage() {
-  const [tab, setTab] = useState("all");
+  const [active, setActive] = useState(null);
   const [openBook, setOpenBook] = useState(null);
   const [getBookTarget, setGetBookTarget] = useState(null);
   const [myBooksRefresh, setMyBooksRefresh] = useState(0);
@@ -1131,259 +1215,269 @@ export default function UserLibraryPage() {
     ]).then(([all, my, expire]) => setCounts({ all, my, expire }));
   }, [myBooksRefresh]);
 
-  const handleIssueSuccess = () => {
-    setMyBooksRefresh((n) => n + 1);
-  };
+  const cfg = SECTIONS.find((s) => s.key === active);
+  const countMap = { all: counts.all, my: counts.my, expire: counts.expire };
 
   return (
     <div
       style={{
         minHeight: "100vh",
-        background: "#060d1a",
-        fontFamily: "'DM Sans', 'Segoe UI', sans-serif",
-        color: "#e2e8f0",
+        background: "#f4f6fb",
+        fontFamily: "'Plus Jakarta Sans', 'Segoe UI', sans-serif",
+        color: "#1a1f36",
+        padding: "36px 48px",
+        marginLeft: "300px",
+        marginTop: "20px",
       }}
     >
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         * { box-sizing: border-box; }
-        input::placeholder { color: #1e3a5f; }
-        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); cursor: pointer; }
-        select option { background: #0f1629; color: #e2e8f0; }
-        ::-webkit-scrollbar { width: 6px; } 
-        ::-webkit-scrollbar-track { background: #0a1020; }
-        ::-webkit-scrollbar-thumb { background: #1e3a5f; border-radius: 3px; }
+        input::placeholder { color: #cbd5e1; }
+        input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.5; }
+        select option { background: #fff; }
       `}</style>
 
-      {/* Sidebar */}
+      {/* ── Header ── */}
       <div
         style={{
-          position: "fixed",
-          left: 0,
-          top: 0,
-          bottom: 0,
-          width: 240,
-          background: "#0a1020",
-          borderRight: "1px solid #1e3a5f",
           display: "flex",
-          flexDirection: "column",
-          zIndex: 100,
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 32,
         }}
       >
-        <div style={{ padding: "28px 20px 20px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <div
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 13,
+              background: "linear-gradient(135deg,#6366f1,#8b5cf6)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 22,
+              boxShadow: "0 4px 14px rgba(99,102,241,0.3)",
+            }}
+          >
+            📖
+          </div>
+          <div>
+            <h1
+              style={{
+                fontSize: 24,
+                fontWeight: 800,
+                margin: 0,
+                color: "#0f172a",
+                letterSpacing: "-0.4px",
+              }}
+            >
+              User Library
+            </h1>
+            <p style={{ margin: 0, color: "#94a3b8", fontSize: 13 }}>
+              Browse and borrow your educational resources
+            </p>
+          </div>
+        </div>
+        <div
+          style={{
+            background: "#fff",
+            border: "1.5px solid #eaecf4",
+            borderRadius: 10,
+            padding: "8px 16px",
+            fontSize: 12,
+            color: "#64748b",
+            fontWeight: 500,
+            boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+          }}
+        >
+          📅{" "}
+          {new Date().toLocaleDateString("en-IN", {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+          })}
+        </div>
+      </div>
+
+      {/* ── Home: Section Cards ── */}
+      {!active && (
+        <>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: "#94a3b8",
+              letterSpacing: "1.5px",
+              marginBottom: 14,
+            }}
+          >
+            BROWSE COLLECTION
+          </div>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+              gap: 20,
+            }}
+          >
+            {SECTIONS.map((s) => (
+              <div
+                key={s.key}
+                onClick={() => {
+                  setActive(s.key);
+                }}
+                style={{
+                  background: "#fff",
+                  border: `1.5px solid ${s.border}`,
+                  borderRadius: 20,
+                  padding: "28px 26px",
+                  cursor: "pointer",
+                  transition: "all 0.25s",
+                  position: "relative",
+                  overflow: "hidden",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-5px)";
+                  e.currentTarget.style.boxShadow =
+                    "0 20px 40px rgba(0,0,0,0.09)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "none";
+                  e.currentTarget.style.boxShadow =
+                    "0 2px 8px rgba(0,0,0,0.04)";
+                }}
+              >
+                {/* Top gradient bar */}
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 5,
+                    background: s.grad,
+                    borderRadius: "20px 20px 0 0",
+                  }}
+                />
+                {/* Decorative circle */}
+                <div
+                  style={{
+                    position: "absolute",
+                    top: -20,
+                    right: -20,
+                    width: 90,
+                    height: 90,
+                    borderRadius: "50%",
+                    background: s.lightBg,
+                    opacity: 0.7,
+                  }}
+                />
+
+                <div style={{ fontSize: 42, marginBottom: 18 }}>{s.icon}</div>
+                <div
+                  style={{
+                    fontSize: 21,
+                    fontWeight: 800,
+                    color: "#0f172a",
+                    marginBottom: 4,
+                  }}
+                >
+                  {s.label}
+                </div>
+                <div
+                  style={{ fontSize: 13, color: "#94a3b8", marginBottom: 20 }}
+                >
+                  {s.sublabel(countMap[s.key])}
+                </div>
+                <div
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    background: s.lightBg,
+                    border: `1px solid ${s.border}`,
+                    borderRadius: 20,
+                    padding: "6px 14px",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: s.color,
+                  }}
+                >
+                  Browse →
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* ── Section View ── */}
+      {active && (
+        <div>
+          {/* Back + Title */}
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 10,
-              marginBottom: 20,
+              gap: 14,
+              marginBottom: 24,
             }}
           >
-            <div
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 10,
-                background: "linear-gradient(135deg, #8b5cf6, #ec4899)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 18,
-                boxShadow: "0 4px 14px rgba(139,92,246,0.4)",
-              }}
-            >
-              📖
-            </div>
-            <div>
-              <div style={{ fontWeight: 800, fontSize: 15, color: "#e2e8f0" }}>
-                LibraryOS
-              </div>
-              <div style={{ fontSize: 11, color: "#334155" }}>
-                Student Portal
-              </div>
-            </div>
-          </div>
-
-          {/* Count pills */}
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 6,
-              marginBottom: 20,
-            }}
-          >
-            {[
-              { label: "Total Books", val: counts.all, col: "#3b82f6" },
-              { label: "My Books", val: counts.my, col: "#8b5cf6" },
-              { label: "Expiring", val: counts.expire, col: "#f59e0b" },
-            ].map((s) => (
-              <div
-                key={s.label}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "6px 10px",
-                  background: `${s.col}08`,
-                  borderRadius: 8,
-                  border: `1px solid ${s.col}15`,
-                }}
-              >
-                <span style={{ fontSize: 11, color: "#475569" }}>
-                  {s.label}
-                </span>
-                <span style={{ fontSize: 13, fontWeight: 800, color: s.col }}>
-                  {s.val}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          <div
-            style={{
-              fontSize: 10,
-              fontWeight: 700,
-              color: "#1e3a5f",
-              letterSpacing: "1.5px",
-              marginBottom: 8,
-              textTransform: "uppercase",
-            }}
-          >
-            Browse
-          </div>
-          {navItems.map((item) => (
             <button
-              key={item.key}
-              onClick={() => setTab(item.key)}
+              onClick={() => {
+                setActive(null);
+              }}
               style={{
-                width: "100%",
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "10px 12px",
-                borderRadius: 10,
-                border: "none",
-                background:
-                  tab === item.key ? "rgba(139,92,246,0.12)" : "transparent",
-                color: tab === item.key ? "#a78bfa" : "#475569",
-                fontWeight: tab === item.key ? 700 : 500,
+                background: "#fff",
+                border: "1.5px solid #e2e8f0",
+                borderRadius: 9,
+                padding: "8px 16px",
+                color: "#64748b",
+                cursor: "pointer",
                 fontSize: 13,
-                cursor: "pointer",
-                marginBottom: 4,
-                textAlign: "left",
-                borderLeft:
-                  tab === item.key
-                    ? "2px solid #8b5cf6"
-                    : "2px solid transparent",
-                transition: "all 0.2s",
+                fontWeight: 600,
+                boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
               }}
             >
-              <span style={{ fontSize: 15 }}>{item.icon}</span>
-              <div>
-                <div>{item.label}</div>
-                <div style={{ fontSize: 10, opacity: 0.6 }}>{item.desc}</div>
+              ← Back
+            </button>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: 20, color: "#0f172a" }}>
+                {cfg?.label}
               </div>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Main */}
-      <div
-        style={{ marginLeft: 240, padding: "40px 48px", minHeight: "100vh" }}
-      >
-        {/* Header */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: 32,
-          }}
-        >
-          <div>
-            <h1
-              style={{
-                fontSize: 28,
-                fontWeight: 800,
-                margin: 0,
-                color: "#f1f5f9",
-                letterSpacing: "-0.5px",
-              }}
-            >
-              {navItems.find((n) => n.key === tab)?.icon}{" "}
-              {navItems.find((n) => n.key === tab)?.label}
-            </h1>
-            <p style={{ margin: "4px 0 0", color: "#475569", fontSize: 13 }}>
-              {navItems.find((n) => n.key === tab)?.desc}
-            </p>
+              <div style={{ color: "#94a3b8", fontSize: 12 }}>
+                {countMap[active]} books found
+              </div>
+            </div>
           </div>
-          <div
-            style={{
-              background: "#0a1020",
-              border: "1px solid #1e3a5f",
-              borderRadius: 10,
-              padding: "8px 16px",
-              fontSize: 12,
-              color: "#334155",
-            }}
-          >
-            📅{" "}
-            {new Date().toLocaleDateString("en-IN", {
-              weekday: "long",
-              day: "numeric",
-              month: "long",
-            })}
-          </div>
+
+          {/* Sections */}
+          {active === "all" && (
+            <AllBooksSection
+              onOpenPDF={(b) => setOpenBook(b)}
+              onGetBook={(b) => setGetBookTarget(b)}
+            />
+          )}
+          {active === "my" && (
+            <MyBooksSection
+              onOpenPDF={(b) => setOpenBook(b)}
+              refreshTrigger={myBooksRefresh}
+            />
+          )}
+          {active === "expire" && (
+            <ExpiringSoonSection onOpenPDF={(b) => setOpenBook(b)} />
+          )}
         </div>
+      )}
 
-        {/* Tab indicator */}
-        <div style={{ display: "flex", gap: 8, marginBottom: 28 }}>
-          {navItems.map((item) => (
-            <button
-              key={item.key}
-              onClick={() => setTab(item.key)}
-              style={{
-                padding: "7px 16px",
-                borderRadius: 20,
-                background:
-                  tab === item.key ? "rgba(139,92,246,0.15)" : "transparent",
-                border:
-                  tab === item.key
-                    ? "1px solid rgba(139,92,246,0.4)"
-                    : "1px solid #1e3a5f",
-                color: tab === item.key ? "#a78bfa" : "#475569",
-                fontWeight: tab === item.key ? 700 : 500,
-                fontSize: 12,
-                cursor: "pointer",
-                transition: "all 0.2s",
-              }}
-            >
-              {item.icon} {item.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Sections */}
-        {tab === "all" && (
-          <AllBooksSection
-            onOpenPDF={(b) => setOpenBook(b)}
-            onGetBook={(b) => setGetBookTarget(b)}
-          />
-        )}
-        {tab === "my" && (
-          <MyBooksSection
-            refreshTrigger={myBooksRefresh}
-            onOpenPDF={(b) => setOpenBook(b)}
-          />
-        )}
-        {tab === "expire" && (
-          <ExpiringSoonSection onOpenPDF={(b) => setOpenBook(b)} />
-        )}
-      </div>
-
-      {/* Modals */}
+      {/* ── Modals ── */}
       {openBook && (
         <PDFViewer book={openBook} onClose={() => setOpenBook(null)} />
       )}
@@ -1391,7 +1485,7 @@ export default function UserLibraryPage() {
         <GetBookModal
           book={getBookTarget}
           onClose={() => setGetBookTarget(null)}
-          onSuccess={handleIssueSuccess}
+          onSuccess={() => setMyBooksRefresh((n) => n + 1)}
         />
       )}
     </div>
