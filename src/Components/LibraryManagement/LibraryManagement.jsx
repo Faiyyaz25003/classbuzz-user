@@ -99,6 +99,7 @@ function PDFViewer({ book, onClose }) {
               📚
             </div>
             <div>
+              {/* ✅ Subject as primary title */}
               <div
                 style={{
                   fontWeight: 700,
@@ -107,20 +108,28 @@ function PDFViewer({ book, onClose }) {
                   fontFamily: "'Plus Jakarta Sans', sans-serif",
                 }}
               >
-                {book.name || book.bookName}
+                {book.subject || book.name || book.bookName}
               </div>
-              <span
-                style={{
-                  fontSize: 10,
-                  color: book.color || "#6366f1",
-                  background: book.bg || "#eef2ff",
-                  padding: "2px 8px",
-                  borderRadius: 20,
-                  fontWeight: 600,
-                }}
-              >
-                {book.category}
-              </span>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span
+                  style={{
+                    fontSize: 10,
+                    color: book.color || "#6366f1",
+                    background: book.bg || "#eef2ff",
+                    padding: "2px 8px",
+                    borderRadius: 20,
+                    fontWeight: 600,
+                  }}
+                >
+                  {book.category}
+                </span>
+                {/* ✅ Book name as secondary */}
+                {book.subject && (
+                  <span style={{ fontSize: 10, color: "#94a3b8" }}>
+                    {book.name || book.bookName}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           <div style={{ display: "flex", gap: 8 }}>
@@ -277,8 +286,9 @@ function GetBookModal({ book, onClose, onSuccess }) {
               >
                 Get Book
               </div>
+              {/* ✅ Subject as subtitle in modal header */}
               <div style={{ color: "rgba(255,255,255,0.75)", fontSize: 12 }}>
-                {book.name}
+                {book.subject || book.name}
               </div>
             </div>
           </div>
@@ -465,6 +475,7 @@ function GetBookModal({ book, onClose, onSuccess }) {
                 >
                   BOOK
                 </label>
+                {/* ✅ Subject as primary in book field */}
                 <div
                   style={{
                     background: `${col}10`,
@@ -479,7 +490,19 @@ function GetBookModal({ book, onClose, onSuccess }) {
                     gap: 8,
                   }}
                 >
-                  <span>📚</span> {book.name}
+                  <span>📚</span>
+                  {book.subject || book.name}
+                  {book.subject && (
+                    <span
+                      style={{
+                        fontSize: 11,
+                        color: `${col}99`,
+                        fontWeight: 500,
+                      }}
+                    >
+                      ({book.name})
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -575,6 +598,7 @@ function BookCard({ book, onClick, onGetBook, showDays }) {
       </div>
 
       <div>
+        {/* ✅ Subject as main title */}
         <div
           style={{
             color: "#0f172a",
@@ -584,7 +608,7 @@ function BookCard({ book, onClick, onGetBook, showDays }) {
             fontFamily: "'Plus Jakarta Sans', sans-serif",
           }}
         >
-          {book.name || book.bookName}
+          {book.subject || book.name || book.bookName}
         </div>
         <span
           style={{
@@ -603,11 +627,11 @@ function BookCard({ book, onClick, onGetBook, showDays }) {
         </span>
       </div>
 
-      {book.course && (
-        <div style={{ fontSize: 11, color: "#94a3b8" }}>
-          {book.subject} · {book.course}
-        </div>
-      )}
+      {/* ✅ Book name · course as subtitle */}
+      <div style={{ fontSize: 11, color: "#94a3b8" }}>
+        {book.name || book.bookName}
+        {book.course ? ` · ${book.course}` : ""}
+      </div>
 
       {showDays && dl !== undefined && (
         <div
@@ -750,6 +774,7 @@ function MyBookCard({ book, onClick }) {
           📚
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
+          {/* ✅ Subject as primary title in My Books card */}
           <div
             style={{
               color: "#0f172a",
@@ -759,22 +784,36 @@ function MyBookCard({ book, onClick }) {
               fontFamily: "'Plus Jakarta Sans', sans-serif",
             }}
           >
-            {book.bookName}
+            {book.subject || book.bookName}
           </div>
-          <span
+          <div
             style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
               marginTop: 4,
-              fontSize: 11,
-              color: col,
-              background: book.bg || "#eef2ff",
-              display: "inline-block",
-              padding: "2px 9px",
-              borderRadius: 20,
-              fontWeight: 600,
             }}
           >
-            {book.category}
-          </span>
+            <span
+              style={{
+                fontSize: 11,
+                color: col,
+                background: book.bg || "#eef2ff",
+                display: "inline-block",
+                padding: "2px 9px",
+                borderRadius: 20,
+                fontWeight: 600,
+              }}
+            >
+              {book.category}
+            </span>
+            {/* ✅ bookName as secondary */}
+            {book.subject && (
+              <span style={{ fontSize: 10, color: "#94a3b8" }}>
+                {book.bookName}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -840,7 +879,6 @@ function AllBooksSection({ onOpenPDF, onGetBook }) {
 
   return (
     <>
-      {/* Search + Filter */}
       <div
         style={{
           display: "flex",
@@ -925,7 +963,6 @@ function AllBooksSection({ onOpenPDF, onGetBook }) {
         </div>
       </div>
 
-      {/* Grid */}
       {loading ? (
         <div
           style={{ textAlign: "center", padding: "60px 0", color: "#94a3b8" }}
@@ -988,7 +1025,10 @@ function MyBooksSection({ onOpenPDF, refreshTrigger }) {
   const filtered = useMemo(
     () =>
       books.filter((b) =>
-        (b.bookName || "").toLowerCase().includes(search.toLowerCase()),
+        // ✅ Search by subject or bookName
+        (b.subject || b.bookName || "")
+          .toLowerCase()
+          .includes(search.toLowerCase()),
       ),
     [books, search],
   );
@@ -1089,7 +1129,10 @@ function ExpiringSoonSection({ onOpenPDF }) {
   const filtered = useMemo(
     () =>
       books.filter((b) =>
-        (b.bookName || "").toLowerCase().includes(search.toLowerCase()),
+        // ✅ Search by subject or bookName
+        (b.subject || b.bookName || "")
+          .toLowerCase()
+          .includes(search.toLowerCase()),
       ),
     [books, search],
   );
@@ -1325,9 +1368,7 @@ export default function UserLibraryPage() {
             {SECTIONS.map((s) => (
               <div
                 key={s.key}
-                onClick={() => {
-                  setActive(s.key);
-                }}
+                onClick={() => setActive(s.key)}
                 style={{
                   background: "#fff",
                   border: `1.5px solid ${s.border}`,
@@ -1350,7 +1391,6 @@ export default function UserLibraryPage() {
                     "0 2px 8px rgba(0,0,0,0.04)";
                 }}
               >
-                {/* Top gradient bar */}
                 <div
                   style={{
                     position: "absolute",
@@ -1362,7 +1402,6 @@ export default function UserLibraryPage() {
                     borderRadius: "20px 20px 0 0",
                   }}
                 />
-                {/* Decorative circle */}
                 <div
                   style={{
                     position: "absolute",
@@ -1375,7 +1414,6 @@ export default function UserLibraryPage() {
                     opacity: 0.7,
                   }}
                 />
-
                 <div style={{ fontSize: 42, marginBottom: 18 }}>{s.icon}</div>
                 <div
                   style={{
@@ -1417,7 +1455,6 @@ export default function UserLibraryPage() {
       {/* ── Section View ── */}
       {active && (
         <div>
-          {/* Back + Title */}
           <div
             style={{
               display: "flex",
@@ -1427,9 +1464,7 @@ export default function UserLibraryPage() {
             }}
           >
             <button
-              onClick={() => {
-                setActive(null);
-              }}
+              onClick={() => setActive(null)}
               style={{
                 background: "#fff",
                 border: "1.5px solid #e2e8f0",
@@ -1458,7 +1493,6 @@ export default function UserLibraryPage() {
             </div>
           </div>
 
-          {/* Sections */}
           {active === "all" && (
             <AllBooksSection
               onOpenPDF={(b) => setOpenBook(b)}
