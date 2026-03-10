@@ -211,11 +211,6 @@ export default function JobPage() {
               </p>
             </div>
 
-            {/* APPLY BUTTON */}
-
-            <button className="mt-4 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">
-              Apply Now
-            </button>
           </div>
         ))}
       </div>
