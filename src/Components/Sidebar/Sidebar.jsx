@@ -35,6 +35,7 @@ export default function Sidebar({ currentView, setCurrentView }) {
     { id: "fees", name: "Fees Record", icon: Clock },
     { id: "event", name: "Event", icon: FileText },
     { id: "schedule", name: "Schedule", icon: LayoutDashboard },
+    { id: "announcement", name: "Announcement", icon: FileText },
     { id: "record", name: "Recorded Lecture", icon: FileText },
     { id: "jobsOpportunity", name: "Jobs Opportunity", icon: FileText },
     { id: "courses", name: "Courses", icon: FileText },

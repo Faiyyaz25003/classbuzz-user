@@ -21,6 +21,7 @@ import Assignment from "../Assignment/Assignment";
 import UpcomingExams from "../UpcomingExams/UpcomingExams";
 import Library from "../LibraryManagement/LibraryManagement";
 import JobsOpportunity from "../JobsOpportunity/JobsOpportunity";
+import Announcement from "../Announcement/Announcement";
 
 export default function Home() {
   const [currentView, setCurrentView] = useState("dashboard");
@@ -37,6 +38,8 @@ export default function Home() {
         return <Leave />;
       case "schedule":
         return <Schedule />;
+      case "announcement":
+        return <Announcement />;
       case "jobsOpportunity":
         return <JobsOpportunity />;
       case "libraryManagement":
