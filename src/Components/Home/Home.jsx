@@ -23,6 +23,7 @@ import Library from "../LibraryManagement/LibraryManagement";
 import JobsOpportunity from "../JobsOpportunity/JobsOpportunity";
 import Announcement from "../Announcement/Announcement";
 import Notes from "../Notes/Notes";
+import CodeBasedAttendence from "../CodeBasedAttendence/CodeBasedAttendence";
 
 export default function Home() {
   const [currentView, setCurrentView] = useState("dashboard");
@@ -33,6 +34,8 @@ export default function Home() {
         return <Dashboard />;
       case "attendance":
         return <Attendance />;
+      case "codeBasedAttendence":
+        return <CodeBasedAttendence />;
       case "fees":
         return <Fees />;
       case "leave":
@@ -49,7 +52,7 @@ export default function Home() {
         return <Event />;
       case "notes":
         return <Notes />;
-         case "leave":
+      case "leave":
         return <Leave />;
       case "courses":
         return <Courses />;
@@ -58,7 +61,7 @@ export default function Home() {
       case "result":
         return <Result />;
       case "certificate":
-        return <Certificate/>
+        return <Certificate />;
       case "id":
         return <Id />;
       case "record":

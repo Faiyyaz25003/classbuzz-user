@@ -31,6 +31,7 @@ export default function Sidebar({ currentView, setCurrentView }) {
   const menuItems = [
     { id: "dashboard", name: "Dashboard", icon: LayoutDashboard },
     { id: "attendance", name: "Attendance", icon: CalendarCheck },
+    { id: "codeBasedAttendence", name: "Code Based Attendence", icon: CalendarCheck },
     { id: "leave", name: "Apply Leave", icon: Clock },
     { id: "fees", name: "Fees Record", icon: Clock },
     { id: "event", name: "Event", icon: FileText },
