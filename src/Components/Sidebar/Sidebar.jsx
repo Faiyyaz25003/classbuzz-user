@@ -31,7 +31,11 @@ export default function Sidebar({ currentView, setCurrentView }) {
   const menuItems = [
     { id: "dashboard", name: "Dashboard", icon: LayoutDashboard },
     { id: "attendance", name: "Attendance", icon: CalendarCheck },
-    { id: "codeBasedAttendence", name: "Code Based Attendence", icon: CalendarCheck },
+    {
+      id: "codeBasedAttendence",
+      name: "Code Based Attendence",
+      icon: CalendarCheck,
+    },
     { id: "leave", name: "Apply Leave", icon: Clock },
     { id: "fees", name: "Fees Record", icon: Clock },
     { id: "event", name: "Event", icon: FileText },
@@ -48,6 +52,7 @@ export default function Sidebar({ currentView, setCurrentView }) {
     { id: "upcomingExams", name: "UpcomingExams", icon: FileText },
     { id: "libraryManagement", name: "Library Management", icon: FileText },
     { id: "id", name: "UserId", icon: FileText },
+    { id: "zoomMeeting", name: "Zoom Meeting", icon: FileText },
   ];
 
   const handleLinkClick = (id) => {

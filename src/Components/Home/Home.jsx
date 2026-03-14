@@ -24,6 +24,7 @@ import JobsOpportunity from "../JobsOpportunity/JobsOpportunity";
 import Announcement from "../Announcement/Announcement";
 import Notes from "../Notes/Notes";
 import CodeBasedAttendence from "../CodeBasedAttendence/CodeBasedAttendence";
+import ZoomMeeting from "../ZoomMeeting/ZoomMeeting";
 
 export default function Home() {
   const [currentView, setCurrentView] = useState("dashboard");
@@ -58,6 +59,8 @@ export default function Home() {
         return <Courses />;
       case "documents":
         return <Documents />;
+      case "zoomMeeting":
+        return <ZoomMeeting />;
       case "result":
         return <Result />;
       case "certificate":
