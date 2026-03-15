@@ -88,7 +88,7 @@ export default function Home() {
     <div className="flex min-h-screen">
       <Sidebar currentView={currentView} setCurrentView={setCurrentView} />
       <Navbar currentView={currentView} setCurrentView={setCurrentView} />
-      <div className="flex-1 p-6 min-h-screen bg-gray-50">
+      <div className="flex-1 py-6 min-h-screen bg-gray-50">
         {renderContent()}
 
         {/* Chat Icon Button */}
