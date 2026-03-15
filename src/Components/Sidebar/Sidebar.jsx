@@ -205,7 +205,7 @@ const menuGroups = [
     items: [
       { id: "announcement", name: "Announcement", icon: Bell },
       { id: "event", name: "Event", icon: CalendarDays },
-      { id: "zoomMeeting", name: "Zoom Meeting", icon: Video },
+      // { id: "zoomMeeting", name: "Zoom Meeting", icon: Video },
     ],
   },
   {
