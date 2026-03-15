@@ -1,10 +1,11 @@
-
 "use client";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import axios from "axios";
 import Image from "next/image";
 import { QRCodeCanvas } from "qrcode.react";
+
+const API = "http://localhost:5000";
 
 export default function Id() {
   const [user, setUser] = useState(null);
@@ -14,13 +15,16 @@ export default function Id() {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
+
       if (!token) {
         setUser(null);
         return;
       }
 
-      const res = await axios.get("http://localhost:5000/api/users/me", {
-        headers: { Authorization: `Bearer ${token}` },
+      const res = await axios.get(`${API}/api/users/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       setUser(res.data);
@@ -36,8 +40,10 @@ export default function Id() {
     fetchUser();
   }, []);
 
-  if (loading) return <p className="text-center mt-10">Loading...</p>;
-  if (!user) return <p className="text-center mt-10">No user logged in</p>;
+  if (loading) return <p className="text-center mt-10 text-lg">Loading...</p>;
+
+  if (!user)
+    return <p className="text-center mt-10 text-lg">No user logged in</p>;
 
   return (
     <div className="ml-[300px] mt-[80px] flex justify-center min-h-screen bg-gray-100 p-6">
@@ -50,6 +56,7 @@ export default function Id() {
         {/* Header */}
         <div className="bg-blue-900 text-white p-4 font-semibold text-sm flex items-center justify-between">
           <p className="text-lg">ClassBuzz</p>
+
           <Image
             src="/logo.jpeg"
             alt="Logo"
@@ -64,15 +71,15 @@ export default function Id() {
           <div className="flex justify-between items-start gap-4">
             {/* Photo */}
             <div className="w-32 h-36 bg-gray-200 rounded-md border shadow-md overflow-hidden">
-              {user.photo ? (
+              {user.profilePic ? (
                 <img
-                  src={user.photo}
-                  alt="photo"
+                  src={`${API}/${user.profilePic}`}
+                  alt="Profile"
                   className="w-full h-full object-cover"
                 />
               ) : (
                 <div className="flex items-center justify-center h-full text-gray-500">
-                  Photo
+                  No Photo
                 </div>
               )}
             </div>
@@ -80,13 +87,14 @@ export default function Id() {
             {/* QR Code */}
             <div className="w-32 h-36 flex items-center justify-center bg-white border rounded-md shadow-md overflow-hidden">
               <QRCodeCanvas
-                value={`http://localhost:5000/api/users/download-pdf/${user._id}`}
-                size={144} // Same as photo height
+                value={`${API}/api/users/download-pdf/${user._id}`}
+                size={140}
                 includeMargin={true}
               />
             </div>
           </div>
 
+          {/* Name */}
           <h2 className="mt-4 font-bold text-lg text-blue-900 text-center">
             {user.name?.toUpperCase()}
           </h2>
@@ -96,18 +104,30 @@ export default function Id() {
             <p>
               <strong>Email :</strong> {user.email}
             </p>
+
             <p>
-              <strong>Phone :</strong> {user.phone || "—"}
+              <strong>Phone :</strong> {user.phone}
             </p>
+
             <p>
               <strong>Department :</strong>{" "}
               {user.departments?.join(", ") || "—"}
             </p>
+
             <p>
               <strong>Position :</strong> {user.positions?.join(", ") || "—"}
             </p>
+
             <p>
-              <strong>Gender :</strong> {user.gender || "—"}
+              <strong>Gender :</strong> {user.gender}
+            </p>
+
+            <p>
+              <strong>Semester :</strong> {user.semester || "—"}
+            </p>
+
+            <p>
+              <strong>Roll No :</strong> {user.rollNo || "—"}
             </p>
           </div>
         </div>
