@@ -1,29 +1,36 @@
 import { useState } from "react";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ISOLATION WRAPPER
-// Ye wrapper ClassBuzz ke sidebar/navbar ko protect karta hai.
-// .cb-student-root ke andar hi sari CSS apply hogi — bahar kuch nahi jayega.
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── API BASE ────────────────────────────────────────────────
+const API = "http://localhost:5000/api";
+
+const apiFetch = async (path, options = {}) => {
+  const res = await fetch(`${API}${path}`, {
+    headers: { "Content-Type": "application/json" },
+    ...options,
+  });
+  const json = await res.json();
+  if (!json.success) throw new Error(json.message || "API error");
+  return json.data;
+};
+
+// ─── Isolation Wrapper ───────────────────────────────────────
 const Isolated = ({ children }) => (
   <>
     <style>{`
       @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700;800&display=swap');
       .cb-student-root { all: initial; display: block; font-family: 'DM Sans', sans-serif; }
       .cb-student-root *, .cb-student-root *::before, .cb-student-root *::after { box-sizing: border-box; }
-      .cb-student-root button,
-      .cb-student-root input { font-family: 'DM Sans', sans-serif; }
+      .cb-student-root button, .cb-student-root input { font-family: 'DM Sans', sans-serif; }
       .cb-student-root ::-webkit-scrollbar { width: 4px; }
       .cb-student-root ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 4px; }
       @keyframes cb-pulse2 { 0%,100%{opacity:1} 50%{opacity:.4} }
+      @keyframes cb-spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
     `}</style>
     <div className="cb-student-root">{children}</div>
   </>
 );
 
-// ─────────────────────────────────────────────────────────────────────────────
-// UTILITIES
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Utilities ───────────────────────────────────────────────
 const AVATAR_COLORS = [
   "#6366f1",
   "#f59e0b",
@@ -45,7 +52,6 @@ const initials = (n) =>
     .slice(0, 2)
     .toUpperCase();
 
-// Reusable inline style objects — koi global class nahi
 const S = {
   page: {
     minHeight: "100vh",
@@ -82,9 +88,6 @@ const S = {
   },
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SHARED UI
-// ─────────────────────────────────────────────────────────────────────────────
 const Avatar = ({ name, size = 28 }) => (
   <div
     style={{
@@ -105,9 +108,6 @@ const Avatar = ({ name, size = 28 }) => (
   </div>
 );
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MOCK DATA
-// ─────────────────────────────────────────────────────────────────────────────
 const MOCK_CHAT = [
   {
     id: 1,
@@ -140,16 +140,15 @@ const MOCK_FILES = [
   "Formula_Sheet.pdf",
 ];
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SCREEN 1 — JOIN ROOM
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── SCREEN 1 — JOIN ROOM ─────────────────────────────────────
 function JoinRoom({ onJoined }) {
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleJoin = () => {
+  const handleJoin = async () => {
     if (!name.trim()) {
       setError("Apna naam likhein");
       return;
@@ -158,18 +157,36 @@ function JoinRoom({ onJoined }) {
       setError("Valid room code likhein");
       return;
     }
+    if (!password.trim()) {
+      setError("Room password likhein");
+      return;
+    }
+
     setError("");
     setLoading(true);
-    // Simulate API — replace with real call
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      // Step 1: get room by code
+      const room = await apiFetch(`/rooms/code/${code.trim()}`);
+      // Step 2: join with password
+      const result = await apiFetch(`/rooms/${room._id}/join`, {
+        method: "POST",
+        body: JSON.stringify({ name: name.trim(), password: password.trim() }),
+      });
       onJoined({
+        roomId: room._id,
         code: code.toUpperCase().trim(),
         studentName: name.trim(),
-        subject: "Mathematics",
-        topic: "Quadratic Equations",
+        subject: result.subject || room.subjectName,
+        topic: result.topic || room.topic,
+        allowChat: result.allowChat,
+        allowWhiteboard: result.allowWhiteboard,
+        mentorName: result.mentorName || "Mentor",
       });
-    }, 1200);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -181,7 +198,7 @@ function JoinRoom({ onJoined }) {
           border: "1.5px solid #e5e7eb",
           padding: "36px 32px",
           width: "100%",
-          maxWidth: 420,
+          maxWidth: 440,
         }}
       >
         {/* Header */}
@@ -219,7 +236,7 @@ function JoinRoom({ onJoined }) {
               Room Join Karein
             </p>
             <p style={{ fontSize: 12, color: "#9ca3af", margin: 0 }}>
-              Student / User Panel
+              Student Panel
             </p>
           </div>
         </div>
@@ -279,8 +296,23 @@ function JoinRoom({ onJoined }) {
                 padding: "14px 12px",
               }}
             />
+          </div>
+
+          {/* Password */}
+          <div>
+            <label style={S.label}>🔒 Room Password *</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setError("");
+              }}
+              placeholder="Mentor ne share kiya password"
+              style={S.input}
+            />
             <p style={{ fontSize: 11, color: "#9ca3af", marginTop: 5 }}>
-              Mentor ne jo code share kiya hai wo yahan daalen
+              Mentor ne jo password share kiya hai wo yahan daalen
             </p>
           </div>
 
@@ -298,9 +330,25 @@ function JoinRoom({ onJoined }) {
               border: "none",
               cursor: loading ? "not-allowed" : "pointer",
               marginTop: 4,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
             }}
           >
-            {loading ? "⏳ Room Dhundh Raha Hoon..." : "🚀 Room Join Karein"}
+            {loading && (
+              <div
+                style={{
+                  width: 16,
+                  height: 16,
+                  border: "2px solid rgba(255,255,255,0.4)",
+                  borderTop: "2px solid #fff",
+                  borderRadius: "50%",
+                  animation: "cb-spin 0.7s linear infinite",
+                }}
+              />
+            )}
+            {loading ? "Room dhundh raha hoon..." : "🚀 Room Join Karein"}
           </button>
         </div>
 
@@ -322,10 +370,11 @@ function JoinRoom({ onJoined }) {
               marginBottom: 3,
             }}
           >
-            💡 Demo ke liye
+            💡 Kaise kaam karta hai
           </p>
           <p style={{ fontSize: 11, color: "#78350f", margin: 0 }}>
-            Koi bhi naam aur code daalo — e.g. <b>MATH-4X9K</b>
+            Mentor se Room Code aur Password maango — phir yahan daal ke join
+            karo
           </p>
         </div>
       </div>
@@ -333,9 +382,7 @@ function JoinRoom({ onJoined }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SCREEN 2 — STUDENT ROOM
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── SCREEN 2 — STUDENT ROOM ─────────────────────────────────
 function StudentRoom({ room, onLeaveRoom }) {
   const [chat, setChat] = useState(MOCK_CHAT);
   const [msg, setMsg] = useState("");
@@ -343,6 +390,7 @@ function StudentRoom({ room, onLeaveRoom }) {
   const [camOn, setCamOn] = useState(false);
   const [handRaised, setHandRaised] = useState(false);
   const [dots, setDots] = useState([]);
+  const [leaving, setLeaving] = useState(false);
 
   const sendMsg = () => {
     if (!msg.trim()) return;
@@ -352,9 +400,16 @@ function StudentRoom({ room, onLeaveRoom }) {
     ]);
     setMsg("");
   };
+
   const wbClick = (e) => {
     const r = e.currentTarget.getBoundingClientRect();
     setDots((d) => [...d, { x: e.clientX - r.left, y: e.clientY - r.top }]);
+  };
+
+  const handleLeave = async () => {
+    setLeaving(true);
+    // Optionally call leave API here if you add one
+    setTimeout(() => onLeaveRoom(), 400);
   };
 
   return (
@@ -367,8 +422,6 @@ function StudentRoom({ room, onLeaveRoom }) {
           padding: "10px 20px",
           display: "flex",
           alignItems: "center",
-          marginTop: "70px",
-          marginLeft: "300px",
           gap: 12,
         }}
       >
@@ -393,10 +446,9 @@ function StudentRoom({ room, onLeaveRoom }) {
             Room: {room.subject}
           </p>
           <p style={{ fontSize: 11, color: "#9ca3af", margin: 0 }}>
-            Topic: {room.topic} · 12 students online
+            Topic: {room.topic} · {room.mentorName}
           </p>
         </div>
-        {/* Room code pill */}
         <div
           style={{
             background: "#f5f3ff",
@@ -444,7 +496,8 @@ function StudentRoom({ room, onLeaveRoom }) {
             {camOn ? "📷 On" : "📷 Off"}
           </button>
           <button
-            onClick={onLeaveRoom}
+            onClick={handleLeave}
+            disabled={leaving}
             style={{
               padding: "6px 16px",
               borderRadius: 8,
@@ -453,10 +506,11 @@ function StudentRoom({ room, onLeaveRoom }) {
               color: "#ef4444",
               fontWeight: 700,
               fontSize: 12,
-              cursor: "pointer",
+              cursor: leaving ? "not-allowed" : "pointer",
+              opacity: leaving ? 0.6 : 1,
             }}
           >
-            Leave Room
+            {leaving ? "Leaving..." : "Leave Room"}
           </button>
         </div>
       </div>
@@ -471,9 +525,74 @@ function StudentRoom({ room, onLeaveRoom }) {
             flexDirection: "column",
             gap: 12,
             minWidth: 0,
-            marginLeft: "300px",
           }}
         >
+          {/* Room info banner */}
+          <div
+            style={{
+              background: "#ede9fe",
+              border: "1px solid #c4b5fd",
+              borderRadius: 10,
+              padding: "10px 14px",
+              display: "flex",
+              gap: 16,
+              alignItems: "center",
+            }}
+          >
+            <div>
+              <span style={{ fontSize: 11, color: "#6d28d9", fontWeight: 700 }}>
+                👤 Mentor:{" "}
+              </span>
+              <span style={{ fontSize: 11, color: "#4c1d95" }}>
+                {room.mentorName}
+              </span>
+            </div>
+            <div>
+              <span style={{ fontSize: 11, color: "#6d28d9", fontWeight: 700 }}>
+                📚 Subject:{" "}
+              </span>
+              <span style={{ fontSize: 11, color: "#4c1d95" }}>
+                {room.subject}
+              </span>
+            </div>
+            <div>
+              <span style={{ fontSize: 11, color: "#6d28d9", fontWeight: 700 }}>
+                📖 Topic:{" "}
+              </span>
+              <span style={{ fontSize: 11, color: "#4c1d95" }}>
+                {room.topic}
+              </span>
+            </div>
+            {!room.allowChat && (
+              <span
+                style={{
+                  fontSize: 10,
+                  background: "#fee2e2",
+                  color: "#dc2626",
+                  borderRadius: 5,
+                  padding: "2px 7px",
+                  fontWeight: 700,
+                }}
+              >
+                Chat Disabled
+              </span>
+            )}
+            {!room.allowWhiteboard && (
+              <span
+                style={{
+                  fontSize: 10,
+                  background: "#fee2e2",
+                  color: "#dc2626",
+                  borderRadius: 5,
+                  padding: "2px 7px",
+                  fontWeight: 700,
+                }}
+              >
+                Whiteboard Disabled
+              </span>
+            )}
+          </div>
+
           {/* Whiteboard */}
           <div
             style={{
@@ -508,26 +627,35 @@ function StudentRoom({ room, onLeaveRoom }) {
               >
                 Live
               </span>
-              {["✏️ Pen", "◻ Shapes", "T Text", "🗑 Clear"].map((t) => (
-                <button
-                  key={t}
-                  style={{
-                    padding: "3px 8px",
-                    borderRadius: 6,
-                    border: "1.5px solid #e5e7eb",
-                    background: "#f9fafb",
-                    fontSize: 11,
-                    color: "#374151",
-                    cursor: "pointer",
-                  }}
+              {room.allowWhiteboard &&
+                ["✏️ Pen", "◻ Shapes", "T Text", "🗑 Clear"].map((t) => (
+                  <button
+                    key={t}
+                    style={{
+                      padding: "3px 8px",
+                      borderRadius: 6,
+                      border: "1.5px solid #e5e7eb",
+                      background: "#f9fafb",
+                      fontSize: 11,
+                      color: "#374151",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {t}
+                  </button>
+                ))}
+              {!room.allowWhiteboard && (
+                <span
+                  style={{ fontSize: 11, color: "#ef4444", fontWeight: 600 }}
                 >
-                  {t}
-                </button>
-              ))}
+                  🔒 Whiteboard disabled by mentor
+                </span>
+              )}
             </div>
+
             {/* Canvas */}
             <div
-              onClick={wbClick}
+              onClick={room.allowWhiteboard ? wbClick : undefined}
               style={{
                 background: "#fafafa",
                 borderRadius: 10,
@@ -535,7 +663,7 @@ function StudentRoom({ room, onLeaveRoom }) {
                 flex: 1,
                 minHeight: 230,
                 position: "relative",
-                cursor: "crosshair",
+                cursor: room.allowWhiteboard ? "crosshair" : "default",
                 overflow: "hidden",
               }}
             >
@@ -670,74 +798,96 @@ function StudentRoom({ room, onLeaveRoom }) {
               >
                 Room Chat
               </p>
-              <div
-                style={{
-                  height: 110,
-                  overflowY: "auto",
-                  marginBottom: 10,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 6,
-                }}
-              >
-                {chat.map((m) => (
-                  <div
-                    key={m.id}
-                    style={{
-                      display: "flex",
-                      gap: 7,
-                      alignItems: "flex-start",
-                    }}
-                  >
-                    <Avatar name={m.author} size={22} />
-                    <div>
-                      <span
-                        style={{
-                          fontSize: 11,
-                          fontWeight: 700,
-                          color:
-                            m.role === "mentor"
-                              ? "#6366f1"
-                              : m.author === room.studentName
-                                ? "#10b981"
-                                : "#f59e0b",
-                        }}
-                      >
-                        {m.author === room.studentName ? "You" : m.author}
-                      </span>
-                      <p
-                        style={{ fontSize: 12, color: "#374151", marginTop: 1 }}
-                      >
-                        {m.text}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div style={{ display: "flex", gap: 6 }}>
-                <input
-                  value={msg}
-                  onChange={(e) => setMsg(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && sendMsg()}
-                  placeholder="Message ya doubt type karo..."
-                  style={{ ...S.input, padding: "8px 11px", fontSize: 12 }}
-                />
-                <button
-                  onClick={sendMsg}
+              {!room.allowChat ? (
+                <div
                   style={{
-                    padding: "8px 14px",
+                    background: "#fee2e2",
+                    border: "1px solid #fca5a5",
                     borderRadius: 8,
-                    background: "#6366f1",
-                    color: "#fff",
-                    fontWeight: 700,
+                    padding: "10px 12px",
                     fontSize: 12,
-                    border: "none",
-                    cursor: "pointer",
+                    color: "#dc2626",
+                    textAlign: "center",
                   }}
                 >
-                  Send
-                </button>
-              </div>
+                  💬 Chat disabled by mentor
+                </div>
+              ) : (
+                <>
+                  <div
+                    style={{
+                      height: 110,
+                      overflowY: "auto",
+                      marginBottom: 10,
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 6,
+                    }}
+                  >
+                    {chat.map((m) => (
+                      <div
+                        key={m.id}
+                        style={{
+                          display: "flex",
+                          gap: 7,
+                          alignItems: "flex-start",
+                        }}
+                      >
+                        <Avatar name={m.author} size={22} />
+                        <div>
+                          <span
+                            style={{
+                              fontSize: 11,
+                              fontWeight: 700,
+                              color:
+                                m.role === "mentor"
+                                  ? "#6366f1"
+                                  : m.author === room.studentName
+                                    ? "#10b981"
+                                    : "#f59e0b",
+                            }}
+                          >
+                            {m.author === room.studentName ? "You" : m.author}
+                          </span>
+                          <p
+                            style={{
+                              fontSize: 12,
+                              color: "#374151",
+                              marginTop: 1,
+                            }}
+                          >
+                            {m.text}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <input
+                      value={msg}
+                      onChange={(e) => setMsg(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && sendMsg()}
+                      placeholder="Message ya doubt type karo..."
+                      style={{ ...S.input, padding: "8px 11px", fontSize: 12 }}
+                    />
+                    <button
+                      onClick={sendMsg}
+                      style={{
+                        padding: "8px 14px",
+                        borderRadius: 8,
+                        background: "#6366f1",
+                        color: "#fff",
+                        fontWeight: 700,
+                        fontSize: 12,
+                        border: "none",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Send
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Resources */}
@@ -836,7 +986,7 @@ function StudentRoom({ room, onLeaveRoom }) {
                 justifyContent: "center",
               }}
             >
-              <Avatar name="Mentor" size={52} />
+              <Avatar name={room.mentorName || "Mentor"} size={52} />
             </div>
             <div
               style={{
@@ -848,7 +998,7 @@ function StudentRoom({ room, onLeaveRoom }) {
               }}
             >
               <span style={{ fontSize: 12, color: "#fff", fontWeight: 600 }}>
-                Room Mentor
+                {room.mentorName || "Mentor"}
               </span>
               <span
                 style={{
@@ -1017,10 +1167,7 @@ function StudentRoom({ room, onLeaveRoom }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ROOT — StudentApp
-// Pura app Isolated wrapper ke andar — ClassBuzz sidebar safe rahega
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── ROOT ─────────────────────────────────────────────────────
 export default function StudentApp() {
   const [screen, setScreen] = useState("join");
   const [room, setRoom] = useState(null);
