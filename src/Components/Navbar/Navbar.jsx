@@ -272,13 +272,21 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Bell, User, ChevronDown, Settings, LogOut, Mail } from "lucide-react";
 
+const BASE_URL = "http://localhost:5000";
+
 export default function Navbar() {
+  const router = useRouter();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [user, setUser] = useState({ name: "Loading...", email: "Loading..." });
+
+  // ── Notification state ──
+  const [notifications, setNotifications] = useState([]);
+  const [readIds, setReadIds] = useState(new Set());
 
   // Load user from localStorage first, then backend
   useEffect(() => {
@@ -306,11 +314,31 @@ export default function Navbar() {
           setUser({ name: "Guest", email: "guest@classbuzz.com" });
         }
       } catch (error) {
-        console.error("❌ Error fetching user:", error);
         setUser({ name: "Guest", email: "guest@classbuzz.com" });
       }
     };
     fetchUser();
+  }, []);
+
+  // ── Fetch recent notifications for preview ──
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const userId = localStorage.getItem("userId") || "demo_user";
+        const res = await axios.get(
+          `${BASE_URL}/api/notifications/user/${userId}`,
+        );
+        setNotifications(res.data.slice(0, 5)); // show latest 5 in dropdown
+        const ids = new Set(
+          res.data.filter((n) => n.readBy?.includes(userId)).map((n) => n._id),
+        );
+        setReadIds(ids);
+      } catch (e) {
+        // If API not available, keep empty
+        setNotifications([]);
+      }
+    };
+    fetchNotifications();
   }, []);
 
   useEffect(() => {
@@ -329,34 +357,39 @@ export default function Navbar() {
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
-  const notifications = [
-    {
-      id: 1,
-      title: "New Assignment",
-      message: "Math homework due tomorrow",
-      time: "5 min ago",
-      unread: true,
-      color: "bg-blue-500",
-    },
-    {
-      id: 2,
-      title: "Meeting Reminder",
-      message: "Team sync at 3 PM today",
-      time: "1 hour ago",
-      unread: true,
-      color: "bg-cyan-500",
-    },
-    {
-      id: 3,
-      title: "Grade Posted",
-      message: "Your physics test score is available",
-      time: "2 hours ago",
-      unread: false,
-      color: "bg-gray-300",
-    },
-  ];
+  // ── Mark single notification as read ──
+  const markRead = async (id) => {
+    if (readIds.has(id)) return;
+    try {
+      const userId = localStorage.getItem("userId") || "demo_user";
+      await axios.put(`${BASE_URL}/api/notifications/${id}/read`, { userId });
+      setReadIds((prev) => new Set([...prev, id]));
+    } catch (e) {
+      setReadIds((prev) => new Set([...prev, id]));
+    }
+  };
 
-  // Generate initials from name
+  // ── Mark all as read ──
+  const markAllRead = async (e) => {
+    e.stopPropagation();
+    try {
+      const userId = localStorage.getItem("userId") || "demo_user";
+      await axios.put(`${BASE_URL}/api/notifications/mark-all-read`, {
+        userId,
+      });
+      setReadIds(new Set(notifications.map((n) => n._id)));
+    } catch (e) {
+      setReadIds(new Set(notifications.map((n) => n._id)));
+    }
+  };
+
+  // ── Go to full notifications page ──
+  const goToNotifications = () => {
+    setIsNotificationOpen(false);
+    router.push("/notifications"); // Change this path to match your route
+  };
+
+  // ── Helpers ──
   const getInitials = (name) => {
     if (!name || name === "Loading...") return "..";
     return name
@@ -367,7 +400,39 @@ export default function Navbar() {
       .toUpperCase();
   };
 
-  const unreadCount = notifications.filter((n) => n.unread).length;
+  const timeAgo = (date) => {
+    const diff = Date.now() - new Date(date).getTime();
+    const mins = Math.floor(diff / 60000);
+    const hrs = Math.floor(mins / 60);
+    if (mins < 1) return "Just now";
+    if (mins < 60) return `${mins}m ago`;
+    if (hrs < 24) return `${hrs}h ago`;
+    return `${Math.floor(hrs / 24)}d ago`;
+  };
+
+  const TYPE_ICONS = {
+    announcement: "📢",
+    exam: "📝",
+    holiday: "🎉",
+    fee: "💰",
+    assignment: "📚",
+    leave: "🌴",
+    result: "🏆",
+    general: "🔔",
+  };
+
+  const TYPE_COLORS = {
+    announcement: "bg-blue-500",
+    exam: "bg-red-500",
+    holiday: "bg-green-500",
+    fee: "bg-yellow-500",
+    assignment: "bg-purple-500",
+    leave: "bg-orange-500",
+    result: "bg-teal-500",
+    general: "bg-slate-400",
+  };
+
+  const unreadCount = notifications.filter((n) => !readIds.has(n._id)).length;
 
   return (
     <nav
@@ -406,7 +471,7 @@ export default function Navbar() {
 
           {/* Right actions */}
           <div className="flex items-center gap-1.5 sm:gap-2">
-            {/* Notifications */}
+            {/* ── Notification Bell ── */}
             <div className="relative notification-dropdown">
               <button
                 onClick={() => {
@@ -421,10 +486,13 @@ export default function Navbar() {
               >
                 <Bell size={17} />
                 {unreadCount > 0 && (
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-400 rounded-full ring-2 ring-[#0f4c5c]" />
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-red-400 rounded-full ring-2 ring-[#0f4c5c] flex items-center justify-center text-white text-[10px] font-bold px-1">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
                 )}
               </button>
 
+              {/* ── Notification Dropdown ── */}
               {isNotificationOpen && (
                 <div
                   className="absolute right-0 mt-2.5 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100/80 overflow-hidden z-50"
@@ -437,44 +505,92 @@ export default function Navbar() {
                         Notifications
                       </h3>
                       <p className="text-cyan-200/70 text-xs mt-0.5">
-                        {unreadCount} unread
+                        {unreadCount > 0
+                          ? `${unreadCount} unread`
+                          : "All caught up!"}
                       </p>
                     </div>
-                    <button className="text-white/60 hover:text-white text-xs underline underline-offset-2">
-                      Mark all read
-                    </button>
-                  </div>
-
-                  {/* Items */}
-                  <div className="max-h-72 overflow-y-auto divide-y divide-gray-50">
-                    {notifications.map((notif) => (
-                      <div
-                        key={notif.id}
-                        className={`flex gap-3 p-3.5 hover:bg-cyan-50/60 transition-colors cursor-pointer ${
-                          notif.unread ? "bg-blue-50/40" : ""
-                        }`}
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={markAllRead}
+                        className="text-white/70 hover:text-white text-xs underline underline-offset-2 transition-colors"
                       >
-                        <div
-                          className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${notif.color}`}
-                        />
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium text-gray-800 text-sm leading-tight">
-                            {notif.title}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-0.5">
-                            {notif.message}
-                          </p>
-                          <p className="text-[10px] text-gray-400 mt-1">
-                            {notif.time}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
+                        Mark all read
+                      </button>
+                    )}
                   </div>
 
-                  <div className="px-4 py-2.5 border-t border-gray-100 text-center bg-gray-50/50">
-                    <button className="text-xs text-[#1e88a8] font-medium hover:underline">
+                  {/* Notification items */}
+                  <div className="max-h-72 overflow-y-auto divide-y divide-gray-50">
+                    {notifications.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-10 gap-2">
+                        <span className="text-3xl">🔕</span>
+                        <p className="text-sm text-gray-400 font-medium">
+                          No notifications yet
+                        </p>
+                      </div>
+                    ) : (
+                      notifications.map((notif) => {
+                        const isRead = readIds.has(notif._id);
+                        return (
+                          <div
+                            key={notif._id}
+                            onClick={() => {
+                              markRead(notif._id);
+                              goToNotifications();
+                            }}
+                            className={`flex gap-3 p-3.5 hover:bg-cyan-50/60 transition-colors cursor-pointer ${
+                              !isRead ? "bg-blue-50/40" : ""
+                            }`}
+                          >
+                            {/* Icon */}
+                            <div className="flex-shrink-0 flex flex-col items-center gap-1.5 pt-0.5">
+                              <span className="text-lg leading-none">
+                                {TYPE_ICONS[notif.type] || "🔔"}
+                              </span>
+                              {!isRead && (
+                                <span
+                                  className={`w-1.5 h-1.5 rounded-full ${TYPE_COLORS[notif.type] || "bg-slate-400"}`}
+                                />
+                              )}
+                            </div>
+                            {/* Content */}
+                            <div className="min-w-0 flex-1">
+                              <p
+                                className={`text-sm leading-tight ${!isRead ? "font-semibold text-gray-800" : "font-medium text-gray-600"}`}
+                              >
+                                {notif.title}
+                              </p>
+                              <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+                                {notif.message}
+                              </p>
+                              <p className="text-[10px] text-gray-400 mt-1">
+                                {timeAgo(notif.createdAt)}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+
+                  {/* Footer — View all */}
+                  <div className="border-t border-gray-100 bg-gray-50/50">
+                    <button
+                      onClick={goToNotifications}
+                      className="w-full flex items-center justify-center gap-2 py-3 text-xs text-[#1e88a8] font-semibold hover:text-[#0f4c5c] hover:bg-cyan-50 transition-colors"
+                    >
                       View all notifications
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                        className="w-3.5 h-3.5"
+                      >
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                        <polyline points="12 5 19 12 12 19" />
+                      </svg>
                     </button>
                   </div>
                 </div>
@@ -484,7 +600,7 @@ export default function Navbar() {
             {/* Divider */}
             <div className="w-px h-6 bg-white/15 mx-0.5 hidden sm:block" />
 
-            {/* Profile */}
+            {/* Profile Dropdown */}
             <div className="relative profile-dropdown">
               <button
                 onClick={() => {
@@ -497,7 +613,6 @@ export default function Navbar() {
                     : "hover:bg-white/10 border border-white/10"
                 }`}
               >
-                {/* Avatar with initials */}
                 <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-300 to-[#1e88a8] flex items-center justify-center text-white font-bold text-[11px] shadow-md shrink-0">
                   {getInitials(user.name)}
                 </div>
@@ -511,9 +626,7 @@ export default function Navbar() {
                 </div>
                 <ChevronDown
                   size={14}
-                  className={`text-white/60 transition-transform duration-300 hidden sm:block ${
-                    isProfileOpen ? "rotate-180" : ""
-                  }`}
+                  className={`text-white/60 transition-transform duration-300 hidden sm:block ${isProfileOpen ? "rotate-180" : ""}`}
                 />
               </button>
 
@@ -562,6 +675,19 @@ export default function Navbar() {
                       <Settings size={15} className="text-[#1e88a8] shrink-0" />
                       <span>Settings</span>
                     </Link>
+                    {/* Notifications link in profile menu too */}
+                    <button
+                      onClick={goToNotifications}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-cyan-50 transition-colors text-gray-700 text-sm"
+                    >
+                      <Bell size={15} className="text-[#1e88a8] shrink-0" />
+                      <span>Notifications</span>
+                      {unreadCount > 0 && (
+                        <span className="ml-auto bg-red-400 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                          {unreadCount}
+                        </span>
+                      )}
+                    </button>
                   </div>
 
                   <div className="border-t border-gray-100 py-1.5">
