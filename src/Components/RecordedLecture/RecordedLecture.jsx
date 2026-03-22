@@ -150,21 +150,39 @@ function SubjectLectures({ subject, department, semester, onBack }) {
                 </div>
               )}
 
-              {/* Action buttons */}
-              <div className="flex flex-wrap gap-3 mt-2">
-                {lecture.youtubeUrl && (
-                  <a
-                    href={lecture.youtubeUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
-                  >
-                    <PlayCircle className="h-4 w-4" />
-                    Watch on YouTube
-                  </a>
-                )}
+              {/* YouTube embedded player */}
+              {lecture.youtubeUrl &&
+                (() => {
+                  const match = lecture.youtubeUrl.match(
+                    /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/,
+                  );
+                  const videoId = match?.[1];
+                  return videoId ? (
+                    <div className="mt-3 overflow-hidden rounded-2xl border border-gray-200 aspect-video">
+                      <iframe
+                        className="w-full h-full"
+                        src={`https://www.youtube.com/embed/${videoId}`}
+                        title={lecture.lectureTitle || "Lecture Video"}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </div>
+                  ) : (
+                    <a
+                      href={lecture.youtubeUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 mt-2"
+                    >
+                      <PlayCircle className="h-4 w-4" />
+                      Watch on YouTube
+                    </a>
+                  );
+                })()}
 
-                {lecture.videoFile && (
+              {/* Uploaded video file button */}
+              {lecture.videoFile && (
+                <div className="flex flex-wrap gap-3 mt-2">
                   <a
                     href={`${API_BASE}/${lecture.videoFile}`}
                     target="_blank"
@@ -174,8 +192,8 @@ function SubjectLectures({ subject, department, semester, onBack }) {
                     <FileVideo className="h-4 w-4" />
                     View Video
                   </a>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* Embedded video player */}
               {lecture.videoFile && (
