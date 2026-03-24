@@ -8,92 +8,96 @@ import ResultPDF from "./ResultPDF";
 export default function Result() {
   const [mounted, setMounted] = useState(false);
   const [loggedUser, setLoggedUser] = useState(null);
-  const [students, setStudents] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [results, setResults] = useState([]);
+  const [finalData, setFinalData] = useState(null);
   const [selectedStudent, setSelectedStudent] = useState(null);
-  const [userResult, setUserResult] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  /* ================= HYDRATION FIX ================= */
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  /* ================= GET USER FROM LOCAL STORAGE ================= */
   useEffect(() => {
     try {
       const userData = localStorage.getItem("user");
       if (userData) {
         setLoggedUser(JSON.parse(userData));
-      } else {
-        console.warn("No user found in localStorage");
       }
     } catch (error) {
       console.error("LocalStorage error:", error);
     }
   }, []);
 
-  /* ================= FETCH RESULTS ================= */
   useEffect(() => {
-    const fetchResults = async () => {
+    const fetchData = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:5000/api/result", // ✅ FIXED ROUTE
-        );
-        setStudents(response.data || []);
+        const [usersRes, resultsRes] = await Promise.all([
+          axios.get("http://localhost:5000/api/users"),
+          axios.get("http://localhost:5000/api/result"),
+        ]);
+
+        setUsers(usersRes.data || []);
+        setResults(resultsRes.data || []);
       } catch (error) {
-        console.error("Error fetching results:", error);
+        console.error("Fetch error:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchResults();
+    fetchData();
   }, []);
 
-  /* ================= MATCH LOGGED USER RESULT ================= */
   useEffect(() => {
-    if (students.length > 0 && loggedUser) {
-      const found = students.find(
-        (s) =>
-          s.rollNo?.toLowerCase() === loggedUser.rollNo?.toLowerCase() ||
-          s.name?.toLowerCase() === loggedUser.name?.toLowerCase(),
+    if (loggedUser && users.length > 0) {
+      const foundUser = users.find(
+        (u) =>
+          (u.rollNo &&
+            loggedUser.rollNo &&
+            u.rollNo.toLowerCase() === loggedUser.rollNo.toLowerCase()) ||
+          (u.email &&
+            loggedUser.email &&
+            u.email.toLowerCase() === loggedUser.email.toLowerCase()) ||
+          (u.name &&
+            loggedUser.name &&
+            u.name.toLowerCase() === loggedUser.name.toLowerCase()),
       );
-      setUserResult(found || null);
+
+      const foundResult = results.find(
+        (r) =>
+          (r.rollNo &&
+            loggedUser.rollNo &&
+            r.rollNo.toLowerCase() === loggedUser.rollNo.toLowerCase()) ||
+          (r.name &&
+            loggedUser.name &&
+            r.name.toLowerCase() === loggedUser.name.toLowerCase()),
+      );
+
+      if (foundUser || foundResult) {
+        setFinalData({
+          ...foundUser,
+          ...foundResult,
+        });
+      } else {
+        setFinalData(null);
+      }
     }
-  }, [students, loggedUser]);
+  }, [loggedUser, users, results]);
 
   if (!mounted) return null;
 
   return (
     <div className="min-h-screen mt-[50px] ml-[300px] bg-gradient-to-br from-indigo-50 to-blue-100 p-6">
       <div className="max-w-5xl mx-auto bg-white shadow-xl rounded-2xl p-8">
-        {/* ================= HEADER ================= */}
         <div className="flex items-center gap-3 mb-6">
           <BookOpen className="w-10 h-10 text-indigo-600" />
           <h1 className="text-3xl font-bold text-gray-800">My Result</h1>
         </div>
 
-        {/* ================= USER INFO ================= */}
-        {!loggedUser ? (
-          <p className="text-center text-red-600 mt-8">
-            User not found. Please login again.
-          </p>
-        ) : (
-          <div className="mb-6 bg-indigo-50 p-4 rounded-lg border border-indigo-100">
-            <p className="text-gray-700 font-medium">
-              <strong>Name:</strong> {loggedUser.name}
-            </p>
-            <p className="text-gray-700 font-medium">
-              <strong>Roll No:</strong> {loggedUser.rollNo}
-            </p>
-          </div>
-        )}
-
-        {/* ================= LOADING ================= */}
         {loading ? (
-          <p className="text-center text-gray-600 mt-8">Loading results...</p>
-        ) : userResult ? (
-          /* ================= RESULT TABLE ================= */
+          <p className="text-center text-gray-600 mt-8">Loading data...</p>
+        ) : finalData ? (
           <div className="overflow-x-auto">
             <table className="w-full border border-gray-200 rounded-lg">
               <thead className="bg-gray-50">
@@ -105,7 +109,7 @@ export default function Result() {
                     Name
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
-                    Class
+                    Semester
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
                     Percentage
@@ -115,42 +119,27 @@ export default function Result() {
                   </th>
                 </tr>
               </thead>
-
-              <tbody className="divide-y divide-gray-200">
-                <tr className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-sm text-gray-900">
-                    {userResult.rollNo}
+              <tbody>
+                <tr>
+                  <td className="px-4 py-3">{finalData.rollNo || "N/A"}</td>
+                  <td className="px-4 py-3">{finalData.name || "N/A"}</td>
+                  <td className="px-4 py-3">
+                    {finalData.semester || finalData.class || "N/A"}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-900">
-                    {userResult.name}
+                  <td className="px-4 py-3">
+                    {finalData.percentage !== undefined
+                      ? `${finalData.percentage}%`
+                      : "N/A"}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-900">
-                    {userResult.class}
-                  </td>
-                  <td className="px-4 py-3 text-sm">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        userResult.percentage >= 75
-                          ? "bg-green-100 text-green-800"
-                          : userResult.percentage >= 60
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {userResult.percentage}%
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-sm">
+                  <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => setSelectedStudent(userResult)}
+                        onClick={() => setSelectedStudent(finalData)}
                         className="text-indigo-600 hover:text-indigo-800 transition flex items-center gap-1 px-2 py-1 rounded hover:bg-indigo-50"
-                        title="View Result"
                       >
                         <Eye className="w-4 h-4" />
                       </button>
-
-                      <ResultPDF student={userResult} />
+                      <ResultPDF student={finalData} />
                     </div>
                   </td>
                 </tr>
@@ -158,14 +147,10 @@ export default function Result() {
             </table>
           </div>
         ) : (
-          /* ================= NO RESULT ================= */
-          <p className="text-center text-gray-600 mt-8">
-            No result found for your account.
-          </p>
+          <p className="text-center text-red-600 mt-8">No data found.</p>
         )}
       </div>
 
-      {/* ================= MODAL ================= */}
       {selectedStudent && (
         <ResultView
           student={selectedStudent}
